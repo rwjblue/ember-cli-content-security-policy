@@ -40,9 +40,13 @@ module.exports = {
       }
 
       res.removeHeader("Content-Security-Policy");
+      res.removeHeader("X-Content-Security-Policy");
+
       res.removeHeader('Content-Security-Policy-Report-Only');
+      res.removeHeader('X-Content-Security-Policy-Report-Only');
 
       res.setHeader(header, headerConfig);
+      res.setHeader('X-' + header, headerConfig);
 
       next();
     });
