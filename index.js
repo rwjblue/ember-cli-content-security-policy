@@ -45,8 +45,8 @@ module.exports = {
       res.removeHeader('Content-Security-Policy-Report-Only');
       res.removeHeader('X-Content-Security-Policy-Report-Only');
 
-      res.setHeader(header, headerConfig);
-      res.setHeader('X-' + header, headerConfig);
+      res.setHeader(header, headerValue);
+      res.setHeader('X-' + header, headerValue);
 
       next();
     });
