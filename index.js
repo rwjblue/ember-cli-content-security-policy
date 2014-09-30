@@ -5,11 +5,11 @@ module.exports = {
     return {
       contentSecurityPolicyHeader: 'Content-Security-Policy',
       contentSecurityPolicy: {
-        'default-src': 'none',
-        'script-src': 'self',
-        'connect-src': 'self',
-        'img-src': 'self',
-        'style-src': 'self'
+        'default-src': "'none'",
+        'script-src': "'self'",
+        'connect-src': "'self'",
+        'img-src': "'self'",
+        'style-src': "'self'"
       }
     }
   },
