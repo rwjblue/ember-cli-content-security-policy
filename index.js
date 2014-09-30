@@ -31,7 +31,7 @@ module.exports = {
       }
 
       var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
-        return memo + '; ' + value + ' ' + headerConfig[value] + '; ';
+        return memo + value + ' ' + headerConfig[value] + '; ';
       }, '');
 
       if (!header || !headerValue) {
