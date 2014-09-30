@@ -1,8 +1,8 @@
 module.exports = {
   name: 'ember-cli-content-security-policy',
 
-  config: function(/* environment, appConfig */) {
-    return {
+  config: function(environment /*, appConfig */) {
+    var ENV = {
       contentSecurityPolicyHeader: 'Content-Security-Policy',
       contentSecurityPolicy: {
         'default-src': "'none'",
@@ -12,6 +12,12 @@ module.exports = {
         'style-src': "'self'"
       }
     }
+
+    if (environment === 'development') {
+      ENV.contentSecurityPolicy['script-src'] = ENV.contentSecurityPolicy['script-src'] + " 'unsafe-eval'";
+    }
+
+    return ENV;
   },
 
   serverMiddleware: function(config) {
@@ -21,7 +27,7 @@ module.exports = {
     var project = options.project;
 
     app.use(function(req, res, next) {
-      var appConfig = project.config(config.environment);
+      var appConfig = project.config(options.environment);
 
       var header = appConfig.contentSecurityPolicyHeader;
       var headerConfig = appConfig.contentSecurityPolicy;
