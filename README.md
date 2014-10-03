@@ -19,6 +19,7 @@ The default `contentSecurityPolicy` value is:
   contentSecurityPolicy: {
     'default-src': "'none'",
     'script-src': "'self'",
+    'font-src': "'self'",
     'connect-src': "'self'",
     'img-src': "'self'",
     'style-src': "'self'"
@@ -33,7 +34,9 @@ default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style
 
 *Please note*:
 + when running `ember serve` with live reload enabled, we also add the `liveReloadPort` to
-the `connect-src` whitelist.
+the `connect-src` and `script-src` whitelists.
++ when running in development we add `'unsafe-eval'` to the `script-src`. This is to allow the `wrapInEval`
+functionality that ember-cli does by default (as a sourcemaps "hack").
 + when setting the values on `contentSecurityPolicy` object to 'self', 'none', 'unsafe-inline','unsafe-eval','inline-script' or 'eval-script', you must include the single quote as shown in the default value above.
 
 ## Installation
