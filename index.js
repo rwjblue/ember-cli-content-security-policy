@@ -3,7 +3,7 @@ module.exports = {
 
   config: function(environment /*, appConfig */) {
     var ENV = {
-      contentSecurityPolicyHeader: 'Content-Security-Policy',
+      contentSecurityPolicyHeader: 'Content-Security-Policy-Report-Only',
       contentSecurityPolicy: {
         'default-src': "'none'",
         'script-src': "'self'",

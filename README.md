@@ -9,7 +9,7 @@ tool to ensure that CSP is kept in the forefront of your thoughts while developi
 This addon is configured via your applications `config/environment.js` file. Two specific properties are
 used from your projects configuration:
 
-* `contentSecurityPolicyHeader` -- The header to use for CSP (**default: `Content-Security-Policy`**)
+* `contentSecurityPolicyHeader` -- The header to use for CSP (**default: `Content-Security-Policy-Report-Only`**)
 * `contentSecurityPolicy` -- This is an object that is used to build the final header value. Each key/value
   in this object is converted into a key/value pair in the resulting header value.
 
