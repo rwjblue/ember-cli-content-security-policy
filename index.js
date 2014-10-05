@@ -10,7 +10,8 @@ module.exports = {
         'font-src': "'self'",
         'connect-src': "'self'",
         'img-src': "'self'",
-        'style-src': "'self'"
+        'style-src': "'self'",
+        'media-src': "'self'"
       }
     }
 
