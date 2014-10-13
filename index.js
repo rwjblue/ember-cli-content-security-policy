@@ -35,8 +35,10 @@ module.exports = {
       var headerConfig = appConfig.contentSecurityPolicy;
 
       if (options.liveReload) {
-        headerConfig['connect-src'] = headerConfig['connect-src'] + ' ws://localhost:' + options.liveReloadPort;
-        headerConfig['script-src'] = headerConfig['script-src'] + ' localhost:' + options.liveReloadPort;
+        ['localhost', '0.0.0.0'].forEach(function(host) {
+          headerConfig['connect-src'] = headerConfig['connect-src'] + ' ws://' + host + ':' + options.liveReloadPort;
+          headerConfig['script-src'] = headerConfig['script-src'] + ' ' + host + ':' + options.liveReloadPort;
+        });
       }
 
       var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
