@@ -5,18 +5,18 @@ module.exports = {
     var ENV = {
       contentSecurityPolicyHeader: 'Content-Security-Policy-Report-Only',
       contentSecurityPolicy: {
-        'default-src': "'none'",
-        'script-src': "'self'",
-        'font-src': "'self'",
-        'connect-src': "'self'",
-        'img-src': "'self'",
-        'style-src': "'self'",
-        'media-src': "'self'"
+        'default-src': ["'none'"],
+        'script-src': ["'self'"],
+        'font-src': ["'self'"],
+        'connect-src': ["'self'"],
+        'img-src': ["'self'"],
+        'style-src': ["'self'"],
+        'media-src': ["'self'"]
       }
     }
 
     if (environment === 'development') {
-      ENV.contentSecurityPolicy['script-src'] = ENV.contentSecurityPolicy['script-src'] + " 'unsafe-eval'";
+      ENV.contentSecurityPolicy['script-src'].push("'unsafe-eval'");
     }
 
     return ENV;
@@ -36,13 +36,17 @@ module.exports = {
 
       if (options.liveReload) {
         ['localhost', '0.0.0.0'].forEach(function(host) {
-          headerConfig['connect-src'] = headerConfig['connect-src'] + ' ws://' + host + ':' + options.liveReloadPort;
-          headerConfig['script-src'] = headerConfig['script-src'] + ' ' + host + ':' + options.liveReloadPort;
+          headerConfig['connect-src'].push('ws://' + host + ':' + options.liveReloadPort);
+          headerConfig['script-src'].push(host + ':' + options.liveReloadPort);
         });
       }
 
       var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
-        return memo + value + ' ' + headerConfig[value] + '; ';
+        var flattenedList = headerConfig[value].reduce(function(preV, curV) {
+          return preV + ' ' + curV;
+        }, '');
+
+        return memo + value + ' ' + flattenedList + '; ';
       }, '');
 
       if (!header || !headerValue) {
