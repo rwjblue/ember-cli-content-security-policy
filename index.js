@@ -28,11 +28,22 @@ module.exports = {
     var options = config.options;
     var project = options.project;
 
+    function fixPoliciesStrings(headerConfig) { // long strings to lists
+      Object.keys(headerConfig).forEach(function(key) {
+        var policy = headerConfig[key];
+        if ( typeof policy === "string" || policy instanceof String ) {
+          headerConfig[key] = policy.split(/ +/); 
+        }
+      });
+
+      return headerConfig;
+    };
+
     app.use(function(req, res, next) {
       var appConfig = project.config(options.environment);
 
       var header = appConfig.contentSecurityPolicyHeader;
-      var headerConfig = appConfig.contentSecurityPolicy;
+      var headerConfig = fixPoliciesStrings(appConfig.contentSecurityPolicy);
 
       if (options.liveReload) {
         ['localhost', '0.0.0.0'].forEach(function(host) {
