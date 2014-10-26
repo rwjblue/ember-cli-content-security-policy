@@ -41,6 +41,11 @@ module.exports = {
         });
       }
 
+      if (header.indexOf('Report-Only')!==-1 && !('report-uri' in headerConfig)) {
+        headerConfig['connect-src'] = headerConfig['connect-src'] + ' http://' + options.host +':' + options.port + '/csp-report';
+        headerConfig['report-uri'] = 'http://' + options.host +':' + options.port + '/csp-report'; 
+      }
+
       var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
         return memo + value + ' ' + headerConfig[value] + '; ';
       }, '');
@@ -60,6 +65,13 @@ module.exports = {
       res.setHeader('X-' + header, headerValue);
 
       next();
+    });
+
+    var bodyParser = require('body-parser');
+    app.use('/csp-report', bodyParser.json({type:'application/csp-report'}));
+    app.use('/csp-report', function(req, res, next) {
+      console.log('Content Security Policy violation: ' + JSON.stringify(req.body));
+      res.send({status:'ok'});
     });
   }
 };
