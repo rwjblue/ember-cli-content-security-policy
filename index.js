@@ -16,7 +16,7 @@ module.exports = {
     }
 
     if (environment === 'development') {
-      ENV.contentSecurityPolicy['script-src'] = ENV.contentSecurityPolicy['script-src'] + " 'unsafe-eval'";
+      ENV.contentSecurityPolicy['script-src'] = ENV.contentSecurityPolicy['script-src'] + " 'unsafe-eval' 'unsafe-inline'";
     }
 
     return ENV;
