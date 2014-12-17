@@ -54,10 +54,10 @@ ENV.contentSecurityPolicy = {
 }
 ```
 
-If you are using a domain alias in your develoment environment (maybe for testing subdomain related functionalities) you should white-label it for livereload:
-```
+If you are using a **domain alias** in your develoment environment (perhaps for testing subdomain related functionalities) you should white-list it for livereload:
+```javascript
 // config/environment.js
-ENV.liveReloadHosts = ['*domain.ext']
+ENV.liveReloadHosts = ['*.domain.ext']
 ```
 
 More information on these options can be found at [content-security-policy.com](http://content-security-policy.com/)
