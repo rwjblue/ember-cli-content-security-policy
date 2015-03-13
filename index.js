@@ -12,7 +12,8 @@ module.exports = {
         'img-src': "'self'",
         'style-src': "'self'",
         'media-src': "'self'"
-      }
+      },
+      liveReloadHosts: ['localhost', '0.0.0.0']
     }
 
     if (environment === 'development') {
@@ -35,7 +36,7 @@ module.exports = {
       var headerConfig = appConfig.contentSecurityPolicy;
 
       if (options.liveReload) {
-        ['localhost', '0.0.0.0'].forEach(function(host) {
+        appConfig.liveReloadHosts.forEach(function(host) {
           headerConfig['connect-src'] = headerConfig['connect-src'] + ' ws://' + host + ':' + options.liveReloadPort;
           headerConfig['script-src'] = headerConfig['script-src'] + ' ' + host + ':' + options.liveReloadPort;
         });
@@ -43,7 +44,7 @@ module.exports = {
 
       if (header.indexOf('Report-Only')!==-1 && !('report-uri' in headerConfig)) {
         headerConfig['connect-src'] = headerConfig['connect-src'] + ' http://' + options.host +':' + options.port + '/csp-report';
-        headerConfig['report-uri'] = 'http://' + options.host +':' + options.port + '/csp-report'; 
+        headerConfig['report-uri'] = 'http://' + options.host +':' + options.port + '/csp-report';
       }
 
       var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
