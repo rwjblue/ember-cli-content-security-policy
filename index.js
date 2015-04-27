@@ -13,7 +13,7 @@ module.exports = {
         'style-src': "'self'",
         'media-src': "'self'"
       }
-    }
+    };
 
     if (environment === 'development') {
       ENV.contentSecurityPolicy['script-src'] = ENV.contentSecurityPolicy['script-src'] + " 'unsafe-eval'";
@@ -23,7 +23,6 @@ module.exports = {
   },
 
   serverMiddleware: function(config) {
-    var addonContent = this;
     var app = config.app;
     var options = config.options;
     var project = options.project;
@@ -42,8 +41,8 @@ module.exports = {
       }
 
       if (header.indexOf('Report-Only')!==-1 && !('report-uri' in headerConfig)) {
-        headerConfig['connect-src'] = headerConfig['connect-src'] + ' http://' + options.host +':' + options.port + '/csp-report';
-        headerConfig['report-uri'] = 'http://' + options.host +':' + options.port + '/csp-report'; 
+        headerConfig['connect-src'] = headerConfig['connect-src'] + ' http://' + options.host + ':' + options.port + '/csp-report';
+        headerConfig['report-uri'] = 'http://' + options.host + ':' + options.port + '/csp-report';
       }
 
       var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
@@ -69,6 +68,7 @@ module.exports = {
 
     var bodyParser = require('body-parser');
     app.use('/csp-report', bodyParser.json({type:'application/csp-report'}));
+    app.use('/csp-report', bodyParser.json({type:'application/json'}));
     app.use('/csp-report', function(req, res, next) {
       console.log('Content Security Policy violation: ' + JSON.stringify(req.body));
       res.send({status:'ok'});
