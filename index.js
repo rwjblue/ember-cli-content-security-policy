@@ -59,11 +59,10 @@ module.exports = {
 
   serverMiddleware: function(config) {
     var app = config.app;
+    var options = config.options;
+    var project = options.project;
 
     app.use(function(req, res, next) {
-      var options = config.options;
-      var project = options.project;
-
       var appConfig = project.config(options.environment);
 
       var headerData = _headerData(appConfig, options),
