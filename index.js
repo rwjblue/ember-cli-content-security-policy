@@ -97,7 +97,7 @@ module.exports = {
   },
 
   contentFor: function(type, config) {
-    if (type === 'head') {
+    if (type === 'head' && config.contentSecurityPolicyMetatag) {
       var headerData = _headerData(config),
          headerValue = headerData.headerValue,
               header = headerData.header;

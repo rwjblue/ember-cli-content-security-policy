@@ -17,6 +17,10 @@ used from your projects configuration:
 * `contentSecurityPolicy` -- This is an object that is used to build the final header value. Each key/value
   in this object is converted into a key/value pair in the resulting header value.
 
+* `contentSecurityPolicyMetatag` -- If true a meta tag will be injected into the head of index.html. Default: false.
+
+  `<meta http-equiv="Content-Security-Policy" content="{csp-directives}"/>`
+
 The default `contentSecurityPolicy` value is:
 
 ```javascript
