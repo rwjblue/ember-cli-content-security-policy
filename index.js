@@ -1,3 +1,38 @@
+var _headerData = function(appConfig, options) {
+  if (!options) {
+    options = {};
+  }
+
+  var header = appConfig.contentSecurityPolicyHeader;
+  var headerConfig = appConfig.contentSecurityPolicy;
+  var normalizedHost = options.host === '0.0.0.0' ? 'localhost' : options.host;
+
+  if (options.liveReload) {
+    ['localhost', '0.0.0.0'].forEach(function(host) {
+      headerConfig['connect-src'] = headerConfig['connect-src'] + ' ws://' + host + ':' + options.liveReloadPort;
+      headerConfig['script-src'] = headerConfig['script-src'] + ' ' + host + ':' + options.liveReloadPort;
+    });
+  }
+
+  if (header.indexOf('Report-Only')!==-1 && !('report-uri' in headerConfig)) {
+    headerConfig['connect-src'] = headerConfig['connect-src'] + ' http://' + normalizedHost + ':' + options.port + '/csp-report';
+    headerConfig['report-uri'] = 'http://' + normalizedHost + ':' + options.port + '/csp-report';
+  }
+
+  var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
+    return memo + value + ' ' + headerConfig[value] + '; ';
+  }, '');
+
+  if (!header || !headerValue) {
+    return;
+  }
+
+  return {
+    header: header,
+    headerValue: headerValue
+  };
+};
+
 module.exports = {
   name: 'ember-cli-content-security-policy',
 
@@ -30,25 +65,9 @@ module.exports = {
     app.use(function(req, res, next) {
       var appConfig = project.config(options.environment);
 
-      var header = appConfig.contentSecurityPolicyHeader;
-      var headerConfig = appConfig.contentSecurityPolicy;
-      var normalizedHost = options.host === '0.0.0.0' ? 'localhost' : options.host;
-
-      if (options.liveReload) {
-        ['localhost', '0.0.0.0'].forEach(function(host) {
-          headerConfig['connect-src'] = headerConfig['connect-src'] + ' ws://' + host + ':' + options.liveReloadPort;
-          headerConfig['script-src'] = headerConfig['script-src'] + ' ' + host + ':' + options.liveReloadPort;
-        });
-      }
-
-      if (header.indexOf('Report-Only')!==-1 && !('report-uri' in headerConfig)) {
-        headerConfig['connect-src'] = headerConfig['connect-src'] + ' http://' + normalizedHost + ':' + options.port + '/csp-report';
-        headerConfig['report-uri'] = 'http://' + normalizedHost + ':' + options.port + '/csp-report';
-      }
-
-      var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
-        return memo + value + ' ' + headerConfig[value] + '; ';
-      }, '');
+      var headerData = _headerData(appConfig, options),
+         headerValue = headerData.headerValue,
+              header = headerData.header;
 
       if (!header || !headerValue) {
         next();
@@ -74,5 +93,15 @@ module.exports = {
       console.log('Content Security Policy violation: ' + JSON.stringify(req.body));
       res.send({status:'ok'});
     });
+  },
+
+  contentFor: function(type, config) {
+    if (type === 'head' && config.contentSecurityPolicyMetatag) {
+      var headerData = _headerData(config),
+         headerValue = headerData.headerValue,
+              header = headerData.header;
+
+      return '<meta http-equiv="' + header + '" content="' + headerValue + '">';
+    }
   }
 };
