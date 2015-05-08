@@ -1,9 +1,7 @@
-var _headerData = function(config) {
-  var options = config.options;
-  var project = options.project;
-
-  var appConfig = project.config(options.environment);
-
+var _headerData = function(appConfig, options) {
+  if (!options) {
+    options = {};
+  }
 
   var header = appConfig.contentSecurityPolicyHeader;
   var headerConfig = appConfig.contentSecurityPolicy;
@@ -63,7 +61,12 @@ module.exports = {
     var app = config.app;
 
     app.use(function(req, res, next) {
-      var headerData = _headerData(config),
+      var options = config.options;
+      var project = options.project;
+
+      var appConfig = project.config(options.environment);
+
+      var headerData = _headerData(appConfig, options),
          headerValue = headerData.headerValue,
               header = headerData.header;
 
@@ -91,5 +94,15 @@ module.exports = {
       console.log('Content Security Policy violation: ' + JSON.stringify(req.body));
       res.send({status:'ok'});
     });
+  },
+
+  contentFor: function(type, config) {
+    if (type === 'head') {
+      var headerData = _headerData(config),
+         headerValue = headerData.headerValue,
+              header = headerData.header;
+
+      return '<meta http-equiv="' + header + '" content="' + headerValue + '">';
+    }
   }
 };
