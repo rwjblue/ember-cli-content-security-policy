@@ -71,7 +71,7 @@ module.exports = {
     app.use('/csp-report', bodyParser.json({type:'application/csp-report'}));
     app.use('/csp-report', bodyParser.json({type:'application/json'}));
     app.use('/csp-report', function(req, res, next) {
-      console.log('Content Security Policy violation: ' + JSON.stringify(req.body));
+      console.log('Content Security Policy violation:\n\n' + JSON.stringify(req.body, null, 2));
       res.send({status:'ok'});
     });
   }
