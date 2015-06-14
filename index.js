@@ -35,9 +35,11 @@ module.exports = {
       var normalizedHost = options.host === '0.0.0.0' ? 'localhost' : options.host;
 
       if (options.liveReload) {
-        ['localhost', '0.0.0.0'].forEach(function(host) {
-          headerConfig['connect-src'] = headerConfig['connect-src'] + ' ws://' + host + ':' + options.liveReloadPort;
-          headerConfig['script-src'] = headerConfig['script-src'] + ' ' + host + ':' + options.liveReloadPort;
+        var liveReloadHost = options.liveReloadHost || options.host;
+        ['localhost', liveReloadHost].forEach(function(host) {
+          var formattedHost = host + ':' + options.liveReloadPort;
+          headerConfig['connect-src'] = headerConfig['connect-src'] + ' ws' + (options.ssl ? 's' :  '') + '://' + formattedHost;
+          headerConfig['script-src'] = headerConfig['script-src'] + ' ' + formattedHost;
         });
       }
 
