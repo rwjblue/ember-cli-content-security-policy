@@ -44,8 +44,9 @@ module.exports = {
       }
 
       if (header.indexOf('Report-Only')!==-1 && !('report-uri' in headerConfig)) {
-        headerConfig['connect-src'] = headerConfig['connect-src'] + ' http://' + normalizedHost + ':' + options.port + '/csp-report';
-        headerConfig['report-uri'] = 'http://' + normalizedHost + ':' + options.port + '/csp-report';
+        var reportURI = 'http' + (options.ssl ? 's': '') + normalizedHost + ':' + options.port + '/csp-report';
+        headerConfig['connect-src'] = headerConfig['connect-src'] + ' ' + reportURI;
+        headerConfig['report-uri'] = reportURI;
       }
 
       var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
