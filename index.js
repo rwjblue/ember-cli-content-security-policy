@@ -35,9 +35,9 @@ module.exports = {
       Object.keys(headerConfig).forEach(function(key) {
         var policy = headerConfig[key];
         if ( typeof policy === "string" || policy instanceof String ) {
-          ui.writeLine('Warning: Content Security Policy');
-          ui.writeLine('Deprecated string format for: ' + key);
-          ui.writeLine('Use an array of strings instead.');
+          ui.writeLine(chalk.yellow('Warning: Content Security Policy'));
+          ui.writeLine(chalk.yellow('Deprecated string format for: ' + key));
+          ui.writeLine(chalk.yellow('Use an array of strings instead.'));
           headerConfig[key] = policy.split(/ +/);
         }
       });
