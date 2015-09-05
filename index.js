@@ -7,18 +7,18 @@ module.exports = {
     var ENV = {
       contentSecurityPolicyHeader: 'Content-Security-Policy-Report-Only',
       contentSecurityPolicy: {
-        'default-src': "'none'",
-        'script-src': "'self'",
-        'font-src': "'self'",
-        'connect-src': "'self'",
-        'img-src': "'self'",
-        'style-src': "'self'",
-        'media-src': "'self'"
+        'default-src': ["'none'"],
+        'script-src': ["'self'"],
+        'font-src': ["'self'"],
+        'connect-src': ["'self'"],
+        'img-src': ["'self'"],
+        'style-src': ["'self'"],
+        'media-src': ["'self'"]
       }
     };
 
     if (environment === 'development') {
-      ENV.contentSecurityPolicy['script-src'] = ENV.contentSecurityPolicy['script-src'] + " 'unsafe-eval'";
+      ENV.contentSecurityPolicy['script-src'].push("'unsafe-eval'");
     }
 
     return ENV;
@@ -28,28 +28,48 @@ module.exports = {
     var app = config.app;
     var options = config.options;
     var project = options.project;
+    var ui = this.ui;
+
+    // provide compatibility with the string format
+    function directiveStringsToLists(headerConfig) {
+      Object.keys(headerConfig).forEach(function(key) {
+        var policy = headerConfig[key];
+        if ( typeof policy === "string" || policy instanceof String ) {
+          ui.writeLine(chalk.yellow('Warning: Content Security Policy'));
+          ui.writeLine(chalk.yellow('Deprecated string format for: ' + key));
+          ui.writeLine(chalk.yellow('Use an array of strings instead.'));
+          headerConfig[key] = policy.split(/ +/);
+        }
+      });
+     
+      return headerConfig;
+    };
 
     app.use(function(req, res, next) {
       var appConfig = project.config(options.environment);
 
       var header = appConfig.contentSecurityPolicyHeader;
-      var headerConfig = appConfig.contentSecurityPolicy;
+      var headerConfig = directiveStringsToLists(appConfig.contentSecurityPolicy);
       var normalizedHost = options.host === '0.0.0.0' ? 'localhost' : options.host;
 
       if (options.liveReload) {
         ['localhost', '0.0.0.0'].forEach(function(host) {
-          headerConfig['connect-src'] = headerConfig['connect-src'] + ' ws://' + host + ':' + options.liveReloadPort;
-          headerConfig['script-src'] = headerConfig['script-src'] + ' ' + host + ':' + options.liveReloadPort;
+          headerConfig['connect-src'].push('ws://' + host + ':' + options.liveReloadPort);
+          headerConfig['script-src'].push(host + ':' + options.liveReloadPort);
         });
       }
 
       if (header.indexOf('Report-Only')!==-1 && !('report-uri' in headerConfig)) {
-        headerConfig['connect-src'] = headerConfig['connect-src'] + ' http://' + normalizedHost + ':' + options.port + '/csp-report';
-        headerConfig['report-uri'] = 'http://' + normalizedHost + ':' + options.port + '/csp-report';
+        headerConfig['connect-src'].push('http://' + normalizedHost + ':' + options.port + '/csp-report');
+        headerConfig['report-uri'] = ['http://' + normalizedHost + ':' + options.port + '/csp-report'];
       }
 
       var headerValue = Object.keys(headerConfig).reduce(function(memo, value) {
-        return memo + value + ' ' + headerConfig[value] + '; ';
+        var flattenedList = headerConfig[value].reduce(function(preV, curV) {
+          return preV + ' ' + curV;
+        }, '');
+
+        return memo + value + ' ' + flattenedList + '; ';
       }, '');
 
       if (!header || !headerValue) {
