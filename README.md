@@ -4,6 +4,8 @@ This addon adds the `Content-Security-Policy` header to response sent from the E
 Clearly, Ember CLI's express server is not intended for production use, and neither is this addon. This is intended as a
 tool to ensure that CSP is kept in the forefront of your thoughts while developing an Ember application.
 
+This addon comes bundled with Ember CLI.
+
 ## Options
 
 This addon is configured via your applications `config/environment.js` file. Two specific properties are
