@@ -50,13 +50,13 @@ module.exports = {
     return {
       contentSecurityPolicyHeader: CSP_HEADER_REPORT_ONLY,
       contentSecurityPolicy: {
-        'default-src':  CSP_NONE,
-        'script-src':   CSP_SELF,
-        'font-src':     CSP_SELF,
-        'connect-src':  CSP_SELF,
-        'img-src':      CSP_SELF,
-        'style-src':    CSP_SELF,
-        'media-src':    CSP_SELF
+        'default-src':  [CSP_NONE],
+        'script-src':   [CSP_SELF],
+        'font-src':     [CSP_SELF],
+        'connect-src':  [CSP_SELF],
+        'img-src':      [CSP_SELF],
+        'style-src':    [CSP_SELF],
+        'media-src':    [CSP_SELF],
       }
     };
   },
