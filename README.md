@@ -17,17 +17,19 @@ used from your projects configuration:
 * `contentSecurityPolicy` -- This is an object that is used to build the final header value. Each key/value
   in this object is converted into a key/value pair in the resulting header value.
 
+* `contentSecurityPolicyMeta` -- Boolean. Toggle delivery via meta-tag. Useful for deployments where headers are not available (mobile, S3, etc) or to tether the CSP policy to the client payload (i.e. policy can be updated without reconfiguring servers). Check the W3C resource for details.
+
 The default `contentSecurityPolicy` value is:
 
 ```javascript
   contentSecurityPolicy: {
-    'default-src': "'none'",
-    'script-src': "'self'",
-    'font-src': "'self'",
-    'connect-src': "'self'",
-    'img-src': "'self'",
-    'style-src': "'self'",
-    'media-src': "'self'"
+    'default-src': ["'none'"],
+    'script-src':  ["'self'"],
+    'font-src':    ["'self'"],
+    'connect-src': ["'self'"],
+    'img-src':     ["'self'"],
+    'style-src':   ["'self'"],
+    'media-src':   ["'self'"]
   }
 ```
 
@@ -37,6 +39,8 @@ Which is translated into:
 default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';
 ```
 
+If a directive is omitted it will default to `'self'`. To clear a directive from the default policy above, set it to `null`. The browser will fallback to the `default-src` if a directive does not exist.
+
 ### Example
 
 If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.local** and a jQuery plugin which modifies the inline `style` attribute of some elements:
@@ -45,12 +49,12 @@ If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.l
 // config/environment.js
 ENV.contentSecurityPolicy = {
   'default-src': "'none'",
-  'script-src': "'self' https://cdn.mxpnl.com", // Allow scripts from https://cdn.mxpnl.com
-  'font-src': "'self' http://fonts.gstatic.com", // Allow fonts to be loaded from http://fonts.gstatic.com
-  'connect-src': "'self' https://api.mixpanel.com http://custom-api.local", // Allow data (ajax/websocket) from api.mixpanel.com and custom-api.local
+  'script-src': ["'self'", "https://cdn.mxpnl.com"], // Allow scripts from https://cdn.mxpnl.com
+  'font-src': ["'self'", "http://fonts.gstatic.com"], // Allow fonts to be loaded from http://fonts.gstatic.com
+  'connect-src': ["'self'", "https://api.mixpanel.com", "http://custom-api.local"], // Allow data (ajax/websocket) from api.mixpanel.com and custom-api.local
   'img-src': "'self'",
-  'style-src': "'self' 'unsafe-inline' http://fonts.googleapis.com", // Allow inline styles and loaded CSS from http://fonts.googleapis.com 
-  'media-src': "'self'"
+  'style-src': ["'self'", "'unsafe-inline'", "http://fonts.googleapis.com"], // Allow inline styles and loaded CSS from http://fonts.googleapis.com
+  'media-src': null // `media-src` will be omitted from policy, browser will fallback to default-src for media resources.
 }
 ```
 
