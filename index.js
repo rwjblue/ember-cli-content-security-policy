@@ -1,3 +1,4 @@
+/* global require,module,process */
 var chalk = require('chalk');
 
 var buildPolicyString = require('./lib/utils')['buildPolicyString'];
@@ -23,25 +24,44 @@ var unsupportedDirectives = function(policyObject) {
   return META_UNSUPPORTED_DIRECTIVES.filter(function(name) {
     return policyObject && (name in policyObject);
   });
-}
+};
 
+// CSP has a built-in fallback mechanism. If, say, `connect-src` is not defined it
+// will fall back to `default-src`. This can cause issues. An example:
+//
+// Developer has has defined the following policy:
+// `default-src: 'self' example.com;`
+// and an addon appends the connect-src entry live-reload.local the result is:
+// `default-src: 'self' example.com; connect-src: live-reload.local;`
+//
+// After the addons change an xhr to example.com (which was previously permitted, via fallback)
+// will now be rejected since it doesn't match live-reload.local.
+//
+// To mitigate, whenever we append to a non-existing directive we must also copy all sources from
+// default-src onto the specified directive.
 var appendSourceList = function(policyObject, name, sourceList) {
   var oldSourceList;
   var oldValue = policyObject[name];
 
-  if (Array.isArray(oldValue)) {
-    oldSourceList = oldValue;
-  } else if (!oldValue) {
-    oldSourceList = [];
-  } else if (typeof oldValue === 'string') {
-    oldSourceList = oldValue.split(' ');
-  } else {
+  // cast string syntax into array
+  if (oldValue && typeof oldValue === 'string') {
+    oldValue = oldValue.split(' ');
+  }
+
+  if (oldValue !== null && typeof oldValue !== 'undefined' && !Array.isArray(oldValue)) {
     throw new Error('Unknown source list value');
+  }
+
+  if (!oldValue || oldValue.length === 0) {
+    // copy default-src (see above)
+    oldSourceList = policyObject['default-src'] || [];
+  } else { // array
+    oldSourceList = oldValue;
   }
 
   oldSourceList.push(sourceList);
   policyObject[name] = oldSourceList.join(' ');
-}
+};
 
 module.exports = {
   name: 'ember-cli-content-security-policy',
@@ -72,6 +92,11 @@ module.exports = {
       var header = appConfig.contentSecurityPolicyHeader;
       var policyObject = appConfig.contentSecurityPolicy;
 
+      if (!header || !policyObject) {
+        next();
+        return;
+      }
+
       // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
       // https://github.com/ember-cli/rfcs/pull/22
       if (options.liveReload) {
@@ -93,7 +118,7 @@ module.exports = {
 
       var headerValue = buildPolicyString(policyObject);
 
-      if (!header || !headerValue) {
+      if (!headerValue) {
         next();
         return;
       }
@@ -127,7 +152,7 @@ module.exports = {
 
       // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
       // https://github.com/ember-cli/rfcs/pull/22
-      if (liveReloadPort) {
+      if (policyObject && liveReloadPort) {
         ['localhost', '0.0.0.0'].forEach(function(host) {
           var liveReloadHost = host + ':' + liveReloadPort;
           appendSourceList(policyObject, 'connect-src', 'ws://' + liveReloadHost);
