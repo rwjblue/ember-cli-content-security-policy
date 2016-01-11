@@ -1,8 +1,18 @@
 # ember-cli-content-security-policy
 
-This addon adds the `Content-Security-Policy` header to response sent from the Ember CLI Express server.
-Clearly, Ember CLI's express server is not intended for production use, and neither is this addon. This is intended as a
-tool to ensure that CSP is kept in the forefront of your thoughts while developing an Ember application.
+This addon makes it easy to use Content Security Policy (CSP) in your project. It can be deployed either
+via a `Content-Security-Policy` header sent from the Ember CLI Express server, or as a meta tag in the
+`index.html` file.
+
+When using the header, configuration is still needed on the production server (Ember CLI's express server 
+is not intended for production use). When using the meta tag this addon can be used for production deployment.
+In any case, using this addon helps keeping CSP in the forefront of your thoughts while developing an Ember application.
+
+## Installation
+
+```bash
+ember install ember-cli-content-security-policy
+```
 
 ## Options
 
@@ -13,11 +23,10 @@ used from your projects configuration:
   - `Content-Security-Policy-Report-Only` This is the default and means nothing is actually blocked but you get warnings in the console.
   - `Content-Security-Policy` This makes the browser block any action that conflicts with the Content Security Policy.
 
-  The Internet Explorer variant of the header (prefixed with `X-`) is automatically added.
 * `contentSecurityPolicy` -- This is an object that is used to build the final header value. Each key/value
   in this object is converted into a key/value pair in the resulting header value.
 
-* `contentSecurityPolicyMeta` -- Boolean. Toggle delivery via meta-tag. Useful for deployments where headers are not available (mobile, S3, etc) or to tether the CSP policy to the client payload (i.e. policy can be updated without reconfiguring servers). Check the W3C resource for details.
+* `contentSecurityPolicyMeta` -- Boolean. Toggle delivery via meta-tag. Useful for deployments where headers are not available (mobile, S3, etc) or to tether the CSP policy to the client payload (i.e. policy can be updated without reconfiguring servers).
 
 The default `contentSecurityPolicy` value is:
 
@@ -48,33 +57,43 @@ If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.l
 ```javascript
 // config/environment.js
 ENV.contentSecurityPolicy = {
+  // Deny everything by default
   'default-src': "'none'",
-  'script-src': ["'self'", "https://cdn.mxpnl.com"], // Allow scripts from https://cdn.mxpnl.com
-  'font-src': ["'self'", "http://fonts.gstatic.com"], // Allow fonts to be loaded from http://fonts.gstatic.com
-  'connect-src': ["'self'", "https://api.mixpanel.com", "http://custom-api.local"], // Allow data (ajax/websocket) from api.mixpanel.com and custom-api.local
+  
+  // Allow scripts from https://cdn.mxpnl.com
+  'script-src': ["'self'", "https://cdn.mxpnl.com"],
+  
+  // Allow fonts to be loaded from http://fonts.gstatic.com
+  'font-src': ["'self'", "http://fonts.gstatic.com"],
+  
+  // Allow data (ajax/websocket) from api.mixpanel.com and custom-api.local
+  'connect-src': ["'self'", "https://api.mixpanel.com", "http://custom-api.local"],
+  
+  // Allow images from the origin itself (i.e. current domain)
   'img-src': "'self'",
-  'style-src': ["'self'", "'unsafe-inline'", "http://fonts.googleapis.com"], // Allow inline styles and loaded CSS from http://fonts.googleapis.com
-  'media-src': null // `media-src` will be omitted from policy, browser will fallback to default-src for media resources.
+  
+  // Allow inline styles and loaded CSS from http://fonts.googleapis.com
+  'style-src': ["'self'", "'unsafe-inline'", "http://fonts.googleapis.com"],
+  
+  // `media-src` will be omitted from policy
+  // Browser will fallback to default-src for media resources (which is to deny, see above).
+  'media-src': null
 }
 ```
 
-More information on these options can be found at [content-security-policy.com](http://content-security-policy.com/)
-
 *Please note*:
-+ when running `ember serve` with live reload enabled, we also add the `liveReloadPort` to
-the `connect-src` and `script-src` whitelists.
-+ when running in development we add `'unsafe-eval'` to the `script-src`. This is to allow the `wrapInEval`
-functionality that ember-cli does by default (as a sourcemaps "hack").
-+ when setting the values on `contentSecurityPolicy` object to 'self', 'none', 'unsafe-inline','unsafe-eval','inline-script' or 'eval-script', you must include the single quote as shown in the default value above.
++ When running `ember serve` with live reload enabled, we also add the `liveReloadPort` to
+  the `connect-src` and `script-src` whitelists.
++ Browser support for CSP varies between browsers, for example the meta-tag delivery method is only available
+  in newer browsers. See the resources below.
++ The Internet Explorer variant of the header (prefixed with `X-`) is automatically added.
++ When setting the values on `contentSecurityPolicy` object to 'self', 'none', 'unsafe-inline' or 'unsafe-eval', 
+  you must include the single quote as shown in the default value above.
 
-## Installation
-
-```bash
-npm install --save-dev ember-cli-content-security-policy
-```
-
-## Resources:
+## Resources
 
 * http://www.w3.org/TR/CSP/
 * http://content-security-policy.com/
 * https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Using_Content_Security_Policy
+* http://caniuse.com/contentsecuritypolicy
+* http://caniuse.com/contentsecuritypolicy2
