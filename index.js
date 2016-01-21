@@ -102,7 +102,8 @@ module.exports = {
       if (options.liveReload) {
         ['localhost', '0.0.0.0'].forEach(function(host) {
           var liveReloadHost = host + ':' + options.liveReloadPort;
-          appendSourceList(policyObject, 'connect-src', 'ws://' + liveReloadHost);
+          var liveReloadProtocol = options.ssl ? 'wss://' : 'ws://';
+          appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
           appendSourceList(policyObject, 'script-src', liveReloadHost);
         });
       }
@@ -155,7 +156,8 @@ module.exports = {
       if (policyObject && liveReloadPort) {
         ['localhost', '0.0.0.0'].forEach(function(host) {
           var liveReloadHost = host + ':' + liveReloadPort;
-          appendSourceList(policyObject, 'connect-src', 'ws://' + liveReloadHost);
+          var liveReloadProtocol = options.ssl ? 'wss://' : 'ws://';
+          appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
           appendSourceList(policyObject, 'script-src', liveReloadHost);
         });
       }
