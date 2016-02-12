@@ -165,7 +165,7 @@ module.exports = {
       var policyString = buildPolicyString(policyObject);
 
       unsupportedDirectives(policyObject).forEach(function(name) {
-        var msg = 'CSP deliverd via meta does not support `' + name + '`, ' +
+        var msg = 'CSP delivered via meta does not support `' + name + '`, ' +
                   'per the W3C recommendation.';
         console.log(chalk.yellow(msg));
       });
