@@ -86,6 +86,7 @@ ENV.contentSecurityPolicy = {
   the `connect-src` and `script-src` whitelists.
 + Browser support for CSP varies between browsers, for example the meta-tag delivery method is only available
   in newer browsers. See the resources below.
++ When using the meta-tag, the report-only mode is not available (a restriction in the CSP spec).
 + The Internet Explorer variant of the header (prefixed with `X-`) is automatically added.
 + When setting the values on `contentSecurityPolicy` object to 'self', 'none', 'unsafe-inline' or 'unsafe-eval', 
   you must include the single quote as shown in the default value above.
