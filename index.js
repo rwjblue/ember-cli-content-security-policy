@@ -165,8 +165,8 @@ module.exports = {
       if (policyObject && liveReloadPort) {
         ['localhost', '0.0.0.0'].forEach(function(host) {
           var liveReloadHost = host + ':' + liveReloadPort;
-          var liveReloadProtocol = options.ssl ? 'wss://' : 'ws://';
-          appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
+          appendSourceList(policyObject, 'connect-src', 'ws://' + liveReloadHost);
+          appendSourceList(policyObject, 'connect-src', 'wss://' + liveReloadHost);
           appendSourceList(policyObject, 'script-src', liveReloadHost);
         });
       }
