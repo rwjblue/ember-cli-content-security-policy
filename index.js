@@ -66,19 +66,28 @@ var appendSourceList = function(policyObject, name, sourceList) {
 module.exports = {
   name: 'ember-cli-content-security-policy',
 
-  config: function(/* environment, appConfig */) {
-    return {
-      contentSecurityPolicyHeader: CSP_HEADER_REPORT_ONLY,
-      contentSecurityPolicy: {
-        'default-src':  [CSP_NONE],
-        'script-src':   [CSP_SELF],
-        'font-src':     [CSP_SELF],
-        'connect-src':  [CSP_SELF],
-        'img-src':      [CSP_SELF],
-        'style-src':    [CSP_SELF],
-        'media-src':    [CSP_SELF],
-      }
+  config: function(environment/*, appConfig */) {
+    var header = CSP_HEADER_REPORT_ONLY;
+
+    var policy = {
+      'default-src':  [CSP_NONE],
+      'script-src':   [CSP_SELF],
+      'font-src':     [CSP_SELF],
+      'connect-src':  [CSP_SELF],
+      'img-src':      [CSP_SELF],
+      'style-src':    [CSP_SELF],
+      'media-src':    [CSP_SELF],
     };
+
+    // testem requires frame-src to run
+    if (environment === 'test') {
+      policy['frame-src'] = CSP_SELF;
+    }
+
+    return ({
+      contentSecurityPolicyHeader: header,
+      contentSecurityPolicy: policy,
+    });
   },
 
   serverMiddleware: function(config) {
@@ -156,8 +165,8 @@ module.exports = {
       if (policyObject && liveReloadPort) {
         ['localhost', '0.0.0.0'].forEach(function(host) {
           var liveReloadHost = host + ':' + liveReloadPort;
-          var liveReloadProtocol = options.ssl ? 'wss://' : 'ws://';
-          appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
+          appendSourceList(policyObject, 'connect-src', 'ws://' + liveReloadHost);
+          appendSourceList(policyObject, 'connect-src', 'wss://' + liveReloadHost);
           appendSourceList(policyObject, 'script-src', liveReloadHost);
         });
       }
