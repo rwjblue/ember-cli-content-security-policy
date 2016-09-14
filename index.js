@@ -185,5 +185,9 @@ module.exports = {
         return '<meta http-equiv="' + CSP_HEADER + '" content="' + policyString + '">';
       }
     }
+  },
+
+  includedCommands: function() {
+    return require('./lib/commands');
   }
 };
