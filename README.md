@@ -81,6 +81,22 @@ ENV.contentSecurityPolicy = {
 }
 ```
 
+## External Configuration
+
+In order to configure your production server, you can use the `csp-headers` command to obtain
+the current headers:
+
+```bash
+$ ember csp-headers --environment production --report-uri /csp-report
+
+# Content Security Policy Header Configuration
+#
+# for Apache: Header set Content-Security-Policy-Report-Only "..."
+# for Nginx : add_header Content-Security-Policy-Report-Only "...";
+
+default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; report-uri /csp-report;
+```
+
 *Please note*:
 + When running `ember serve` with live reload enabled, we also add the `liveReloadPort` to
   the `connect-src` and `script-src` whitelists.
