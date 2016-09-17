@@ -52,7 +52,7 @@ If a directive is omitted it will default to `'self'`. To clear a directive from
 
 ### Example
 
-If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.local** and a jQuery plugin which modifies the inline `style` attribute of some elements:
+If your site uses **Google Fonts**, **Mixpanel** and a custom API at **custom-api.local**:
 
 ```javascript
 // config/environment.js
@@ -60,23 +60,23 @@ ENV.contentSecurityPolicy = {
   // Deny everything by default
   'default-src': "'none'",
   
-  // Allow scripts from https://cdn.mxpnl.com
-  'script-src': ["'self'", "https://cdn.mxpnl.com"],
+  // Allow scripts at https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js
+  'script-src': ["'self'", "https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js"],
   
   // Allow fonts to be loaded from http://fonts.gstatic.com
   'font-src': ["'self'", "http://fonts.gstatic.com"],
   
-  // Allow data (ajax/websocket) from api.mixpanel.com and custom-api.local
-  'connect-src': ["'self'", "https://api.mixpanel.com", "http://custom-api.local"],
+  // Allow data (xhr/websocket) from api.mixpanel.com and custom-api.local
+  'connect-src': ["'self'", "https://api.mixpanel.com", "https://custom-api.local"],
   
   // Allow images from the origin itself (i.e. current domain)
   'img-src': "'self'",
   
-  // Allow inline styles and loaded CSS from http://fonts.googleapis.com
-  'style-src': ["'self'", "'unsafe-inline'", "http://fonts.googleapis.com"],
+  // Allow CSS loaded from https://fonts.googleapis.com
+  'style-src': ["'self'", "https://fonts.googleapis.com"],
   
-  // `media-src` will be omitted from policy
-  // Browser will fallback to default-src for media resources (which is to deny, see above).
+  // Omit `media-src` from policy
+  // Browser will fallback to default-src for media resources (which is 'none', see above)
   'media-src': null
 }
 ```
@@ -98,3 +98,4 @@ ENV.contentSecurityPolicy = {
 * https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Using_Content_Security_Policy
 * http://caniuse.com/contentsecuritypolicy
 * http://caniuse.com/contentsecuritypolicy2
+* https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/45542.pdf
