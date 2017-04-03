@@ -6,6 +6,9 @@
     "doc": "doc",
     "test": "tests"
   },
+  "files": [
+    "!dist/"
+  ],
   "scripts": {
     "start": "ember server",
     "build": "ember build",
