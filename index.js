@@ -77,6 +77,7 @@ module.exports = {
       'img-src':      [CSP_SELF],
       'style-src':    [CSP_SELF],
       'media-src':    [CSP_SELF],
+      'worker-src':   [CSP_SELF]
     };
 
     // testem requires frame-src to run
