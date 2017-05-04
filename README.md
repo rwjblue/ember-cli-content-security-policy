@@ -14,6 +14,8 @@ In any case, using this addon helps keeping CSP in the forefront of your thought
 ember install ember-cli-content-security-policy
 ```
 
+This addon comes bundled with Ember CLI.
+
 ## Options
 
 This addon is configured via your applications `config/environment.js` file. Two specific properties are
