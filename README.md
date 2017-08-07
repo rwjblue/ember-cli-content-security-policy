@@ -81,21 +81,12 @@ ENV.contentSecurityPolicy = {
 }
 ```
 
-## Development Configuration
-
-You might want to disable all CSP rules while development or in a particular situation, here's an example of how to do so:
+If you may want to temporarily disable CSP, for example in 
+development, simply set an empty object:
 
 ```
 if (environment === 'development') {
-    ENV.contentSecurityPolicy = {
-      'default-src': ["*"],
-      'script-src':  null,
-      'font-src':    null,
-      'connect-src': null,
-      'img-src':     null,
-      'style-src':   null,
-      'media-src':   null
-    };
+    ENV.contentSecurityPolicy = {};
 }
 ```
 
