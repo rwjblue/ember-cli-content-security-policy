@@ -81,6 +81,24 @@ ENV.contentSecurityPolicy = {
 }
 ```
 
+## Development Configuration
+
+You might want to disable all CSP rules while development or in a particular situation, here's an example of how to do so:
+
+```
+if (environment === 'development') {
+    ENV.contentSecurityPolicy = {
+      'default-src': ["*"],
+      'script-src':  null,
+      'font-src':    null,
+      'connect-src': null,
+      'img-src':     null,
+      'style-src':   null,
+      'media-src':   null
+    };
+}
+```
+
 ## External Configuration
 
 In order to configure your production server, you can use the `csp-headers` command to obtain
