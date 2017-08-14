@@ -18,8 +18,8 @@
     "test": "ember try:each"
   }
   "dependencies": {
-    "body-parser": "^1.12.3",
-    "chalk": "^1.0.0"
+    "body-parser": "^1.17.0",
+    "chalk": "^2.0.0"
   },
   "devDependencies": {
     "broccoli-asset-rev": "^2.4.5",
