@@ -1,4 +1,6 @@
-/* global require,module,process */
+/* eslint-env node */
+/* global require, module, process */
+'use strict';
 var chalk = require('chalk');
 
 var buildPolicyString = require('./lib/utils')['buildPolicyString'];
