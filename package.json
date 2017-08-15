@@ -1,6 +1,6 @@
 {
   "name": "ember-cli-content-security-policy",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "This addon adds the Content-Security-Policy header to response sent from the Ember CLI Express server.",
   "keywords": [
     "ember-addon"
