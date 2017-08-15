@@ -1,4 +1,7 @@
-/* global require,module,process */
+/* eslint-env node */
+/* global require, module, process */
+
+'use strict';
 var chalk = require('chalk');
 
 var buildPolicyString = require('./lib/utils')['buildPolicyString'];
@@ -149,7 +152,8 @@ module.exports = {
     var bodyParser = require('body-parser');
     app.use(REPORT_PATH, bodyParser.json({ type: 'application/csp-report' }));
     app.use(REPORT_PATH, bodyParser.json({ type: 'application/json' }));
-    app.use(REPORT_PATH, function(req, res, next) {
+    app.use(REPORT_PATH, function(req, res, _next) {
+      // eslint-disable-next-line no-console
       console.log(chalk.red('Content Security Policy violation:') + '\n\n' + JSON.stringify(req.body, null, 2));
       res.send({ status:'ok' });
     });
@@ -176,10 +180,11 @@ module.exports = {
       unsupportedDirectives(policyObject).forEach(function(name) {
         var msg = 'CSP delivered via meta does not support `' + name + '`, ' +
                   'per the W3C recommendation.';
-        console.log(chalk.yellow(msg));
+        console.log(chalk.yellow(msg)); // eslint-disable-line no-console
       });
 
       if (!policyString) {
+        // eslint-disable-next-line no-console
         console.log(chalk.yellow('CSP via meta tag enabled but no policy exist.'));
       } else {
         return '<meta http-equiv="' + CSP_HEADER + '" content="' + policyString + '">';
