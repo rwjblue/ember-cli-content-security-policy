@@ -78,7 +78,7 @@ ENV.contentSecurityPolicy = {
   // Omit `media-src` from policy
   // Browser will fallback to default-src for media resources (which is 'none', see above)
   'media-src': null
-}
+};
 ```
 
 ## External Configuration
