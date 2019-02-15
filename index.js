@@ -23,6 +23,8 @@ var META_UNSUPPORTED_DIRECTIVES = [
   CSP_SANDBOX,
 ];
 
+var NONCE = 'abcdefg';
+
 var unsupportedDirectives = function(policyObject) {
   return META_UNSUPPORTED_DIRECTIVES.filter(function(name) {
     return policyObject && (name in policyObject);
@@ -109,6 +111,10 @@ module.exports = {
         return;
       }
 
+      if (policyObject) {
+        appendSourceList(policyObject, 'script-src', "'nonce-" + NONCE + "'");
+      }
+
       // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
       // https://github.com/ember-cli/rfcs/pull/22
       if (options.liveReload) {
@@ -159,7 +165,7 @@ module.exports = {
     });
   },
 
-  contentFor: function(type, appConfig) {
+  contentFor: function(type, appConfig, existingContent) {
     if ((type === 'head' && appConfig.contentSecurityPolicyMeta)) {
       var policyObject = appConfig.contentSecurityPolicy;
       var liveReloadPort = process.env.EMBER_CLI_INJECT_LIVE_RELOAD_PORT;
@@ -173,6 +179,10 @@ module.exports = {
           appendSourceList(policyObject, 'connect-src', 'wss://' + liveReloadHost);
           appendSourceList(policyObject, 'script-src', liveReloadHost);
         });
+      }
+
+      if (policyObject && appConfig.environment === 'test') {
+        appendSourceList(policyObject, 'script-src', "'nonce-" + NONCE + "'");
       }
 
       var policyString = buildPolicyString(policyObject);
@@ -189,6 +199,15 @@ module.exports = {
       } else {
         return '<meta http-equiv="' + CSP_HEADER + '" content="' + policyString + '">';
       }
+    }
+
+    if (type === 'test-body-footer') {
+      // Add nonce to <script> tag inserted by ember-cli to assert that test file was loaded.
+      existingContent.forEach((entry, index) => {
+        if (/<script>\s*Ember.assert\(.*EmberENV.TESTS_FILE_LOADED\);\s*<\/script>/.test(entry)) {
+          existingContent[index] = entry.replace('<script>', '<script nonce="' + NONCE + '">');
+        }
+      });
     }
   },
 
