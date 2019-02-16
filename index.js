@@ -112,7 +112,7 @@ module.exports = {
       // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
       // https://github.com/ember-cli/rfcs/pull/22
       if (options.liveReload) {
-        ['localhost', '0.0.0.0', options.liveReloadHost].forEach(function(host) {
+        ['localhost', '0.0.0.0', options.liveReloadHost].filter(Boolean).forEach(function(host) {
           var liveReloadHost = host + ':' + options.liveReloadPort;
           var liveReloadProtocol = options.ssl ? 'wss://' : 'ws://';
           appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
