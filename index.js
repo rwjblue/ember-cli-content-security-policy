@@ -23,7 +23,7 @@ var META_UNSUPPORTED_DIRECTIVES = [
   CSP_SANDBOX,
 ];
 
-var NONCE = 'abcdefg';
+var STATIC_TEST_NONCE = 'abcdefg';
 
 var unsupportedDirectives = function(policyObject) {
   return META_UNSUPPORTED_DIRECTIVES.filter(function(name) {
@@ -112,7 +112,7 @@ module.exports = {
       }
 
       if (policyObject) {
-        appendSourceList(policyObject, 'script-src', "'nonce-" + NONCE + "'");
+        appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
       // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
@@ -182,7 +182,7 @@ module.exports = {
       }
 
       if (policyObject && appConfig.environment === 'test') {
-        appendSourceList(policyObject, 'script-src', "'nonce-" + NONCE + "'");
+        appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
       var policyString = buildPolicyString(policyObject);
@@ -205,7 +205,7 @@ module.exports = {
       // Add nonce to <script> tag inserted by ember-cli to assert that test file was loaded.
       existingContent.forEach((entry, index) => {
         if (/<script>\s*Ember.assert\(.*EmberENV.TESTS_FILE_LOADED\);\s*<\/script>/.test(entry)) {
-          existingContent[index] = entry.replace('<script>', '<script nonce="' + NONCE + '">');
+          existingContent[index] = entry.replace('<script>', '<script nonce="' + STATIC_TEST_NONCE + '">');
         }
       });
     }
