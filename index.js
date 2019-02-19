@@ -100,6 +100,8 @@ module.exports = {
     var options = config.options;
     var project = options.project;
 
+    console.log(options.environment);
+
     app.use(function(req, res, next) {
       var appConfig = project.config(options.environment);
 
@@ -111,6 +113,8 @@ module.exports = {
         return;
       }
 
+      // the local server will never run for production builds, so no danger in adding the nonce all the time
+      // even so it's only needed if tests are executed by opening `http://localhost:4200/tests`
       if (policyObject) {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
