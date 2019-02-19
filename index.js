@@ -23,6 +23,8 @@ var META_UNSUPPORTED_DIRECTIVES = [
   CSP_SANDBOX,
 ];
 
+var STATIC_TEST_NONCE = 'abcdefg';
+
 var unsupportedDirectives = function(policyObject) {
   return META_UNSUPPORTED_DIRECTIVES.filter(function(name) {
     return policyObject && (name in policyObject);
@@ -98,6 +100,8 @@ module.exports = {
     var options = config.options;
     var project = options.project;
 
+    console.log(options.environment);
+
     app.use(function(req, res, next) {
       var appConfig = project.config(options.environment);
 
@@ -107,6 +111,12 @@ module.exports = {
       if (!header || !policyObject) {
         next();
         return;
+      }
+
+      // the local server will never run for production builds, so no danger in adding the nonce all the time
+      // even so it's only needed if tests are executed by opening `http://localhost:4200/tests`
+      if (policyObject) {
+        appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
       // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
@@ -159,7 +169,7 @@ module.exports = {
     });
   },
 
-  contentFor: function(type, appConfig) {
+  contentFor: function(type, appConfig, existingContent) {
     if ((type === 'head' && appConfig.contentSecurityPolicyMeta)) {
       var policyObject = appConfig.contentSecurityPolicy;
       var liveReloadPort = process.env.EMBER_CLI_INJECT_LIVE_RELOAD_PORT;
@@ -173,6 +183,10 @@ module.exports = {
           appendSourceList(policyObject, 'connect-src', 'wss://' + liveReloadHost);
           appendSourceList(policyObject, 'script-src', liveReloadHost);
         });
+      }
+
+      if (policyObject && appConfig.environment === 'test') {
+        appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
       var policyString = buildPolicyString(policyObject);
@@ -189,6 +203,15 @@ module.exports = {
       } else {
         return '<meta http-equiv="' + CSP_HEADER + '" content="' + policyString + '">';
       }
+    }
+
+    if (type === 'test-body-footer') {
+      // Add nonce to <script> tag inserted by ember-cli to assert that test file was loaded.
+      existingContent.forEach((entry, index) => {
+        if (/<script>\s*Ember.assert\(.*EmberENV.TESTS_FILE_LOADED\);\s*<\/script>/.test(entry)) {
+          existingContent[index] = entry.replace('<script>', '<script nonce="' + STATIC_TEST_NONCE + '">');
+        }
+      });
     }
   },
 
