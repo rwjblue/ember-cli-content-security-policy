@@ -100,8 +100,6 @@ module.exports = {
     var options = config.options;
     var project = options.project;
 
-    console.log(options.environment);
-
     app.use(function(req, res, next) {
       var appConfig = project.config(options.environment);
 
