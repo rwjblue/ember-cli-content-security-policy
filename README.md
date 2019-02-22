@@ -49,6 +49,10 @@ interface EmberCLIContentSecurityPolicyConfig {
   // Controls if addon is enabled at all.
   enabled?: boolean,
 
+  // Controls if addon causes tests to fail if they violate configured CSP
+  // policy.
+  failTests: true,
+
   // A hash of options representing a Content Security Policy. The key must be
   // a CSP directive name as defined by spec. The value must be an array of
   // strings that form a CSP directive value, most likely a source list, e.g.
@@ -77,6 +81,7 @@ export default function(environment) {
   return {
     delivery: ['header'],
     enabled: true,
+    failTests: true,
     policy: {
       'default-src':  ["'none'"],
       'script-src':   ["'self'"],
