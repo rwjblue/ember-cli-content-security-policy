@@ -8,7 +8,16 @@ When using the header, configuration is still needed on the production server (E
 is not intended for production use). When using the meta tag this addon can be used for production deployment.
 In any case, using this addon helps keeping CSP in the forefront of your thoughts while developing an Ember application.
 
-## Installation
+
+Compatibility
+------------------------------------------------------------------------------
+
+* Ember.js v2.18 or above
+* Ember CLI v2.13 or above
+
+
+Installation
+------------------------------------------------------------------------------
 
 ```bash
 ember install ember-cli-content-security-policy

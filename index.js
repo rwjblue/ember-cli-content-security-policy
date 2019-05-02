@@ -1,6 +1,3 @@
-/* eslint-env node */
-/* global require, module, process */
-
 'use strict';
 var chalk = require('chalk');
 
@@ -69,7 +66,7 @@ var appendSourceList = function(policyObject, name, sourceList) {
 };
 
 module.exports = {
-  name: 'ember-cli-content-security-policy',
+  name: require('./package').name,
 
   config: function(environment/*, appConfig */) {
     var header = CSP_HEADER_REPORT_ONLY;
