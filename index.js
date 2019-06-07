@@ -68,28 +68,47 @@ var appendSourceList = function(policyObject, name, sourceList) {
 module.exports = {
   name: require('./package').name,
 
-  config: function(environment/*, appConfig */) {
-    var header = CSP_HEADER_REPORT_ONLY;
-
-    var policy = {
-      'default-src':  [CSP_NONE],
-      'script-src':   [CSP_SELF],
-      'font-src':     [CSP_SELF],
-      'connect-src':  [CSP_SELF],
-      'img-src':      [CSP_SELF],
-      'style-src':    [CSP_SELF],
-      'media-src':    [CSP_SELF],
+  config: function(environment, appConfig) {
+    let defaultConfig = {
+      delivery: ['header'],
+      enabled: true,
+      policy: {
+        'default-src':  [CSP_NONE],
+        'script-src':   [CSP_SELF],
+        'font-src':     [CSP_SELF],
+        'connect-src':  [CSP_SELF],
+        'img-src':      [CSP_SELF],
+        'style-src':    [CSP_SELF],
+        'media-src':    [CSP_SELF],
+      },
+      reportOnly: true,
     };
 
     // testem requires frame-src to run
     if (environment === 'test') {
-      policy['frame-src'] = CSP_SELF;
+      defaultConfig.policy['frame-src'] = CSP_SELF;
     }
 
-    return ({
-      contentSecurityPolicyHeader: header,
-      contentSecurityPolicy: policy,
-    });
+    this.ui.writeWarnLine(
+      'Using `contentSecurityPolicy`, `contentSecurityPolicyHeader` and `contentSecurityPolicyMeta` keys ' +
+      'to configure ember-cli-content-security-policy is deprecate and will be removed in v2.0.0. ' +
+      'Please find detailed information about new configuration options in addon documentation.',
+      !appConfig.contentSecurityPolicy || !appConfig.contentSecurityPolicyHeader || !appConfig.contentSecurityPolicyMeta
+    );
+
+    if (appConfig.contentSecurityPolicy) {
+      defaultConfig.policy = appConfig.contentSecurityPolicy;
+    }
+    if (appConfig.contentSecurityPolicyMeta === false) {
+      defaultConfig.delivery = ['header'];
+    }
+    if (appConfig.contentSecurityPolicyHeader) {
+      defaultConfig.reportOnly = appConfig.contentSecurityPolicyHeader !== CSP_HEADER;
+    }
+
+    return {
+      'ember-cli-content-security-policy': defaultConfig
+    };
   },
 
   serverMiddleware: function(config) {
@@ -100,13 +119,13 @@ module.exports = {
     app.use(function(req, res, next) {
       var appConfig = project.config(options.environment);
 
-      var header = appConfig.contentSecurityPolicyHeader;
-      var policyObject = appConfig.contentSecurityPolicy;
-
-      if (!header || !policyObject) {
+      if (!appConfig['ember-cli-content-security-policy'].enabled) {
         next();
         return;
       }
+
+      var header = appConfig['ember-cli-content-security-policy'].reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
+      var policyObject = appConfig['ember-cli-content-security-policy'].policy;
 
       // the local server will never run for production builds, so no danger in adding the nonce all the time
       // even so it's only needed if tests are executed by opening `http://localhost:4200/tests`
@@ -165,8 +184,19 @@ module.exports = {
   },
 
   contentFor: function(type, appConfig, existingContent) {
-    if ((type === 'head' && appConfig.contentSecurityPolicyMeta)) {
-      var policyObject = appConfig.contentSecurityPolicy;
+    if (!appConfig['ember-cli-content-security-policy'].enabled) {
+      return;
+    }
+
+    if (type === 'head' && appConfig['ember-cli-content-security-policy'].delivery.includes('meta')) {
+      this.ui.writeWarnLine(
+        'Content Security Policy does not support report only mode if delivered via meta element. ' +
+        "Either set `ENV['ember-cli-content-security-policy'].reportOnly` to `false` or remove `'meta'` " +
+        "from `ENV['ember-cli-content-security-policy'].delivery`.",
+        appConfig['ember-cli-content-security-policy'].reportOnly
+      );
+
+      var policyObject = appConfig['ember-cli-content-security-policy'].policy;
       var liveReloadPort = process.env.EMBER_CLI_INJECT_LIVE_RELOAD_PORT;
 
       // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented

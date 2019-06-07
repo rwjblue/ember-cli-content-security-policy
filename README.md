@@ -23,70 +23,68 @@ Installation
 ember install ember-cli-content-security-policy
 ```
 
-## Options
+## Configuration
 
-This addon is configured via your applications `config/environment.js` file. Two specific properties are
-used from your projects configuration:
+This addon is configured via your applications `config/environment.js` file using `ember-cli-content-security-policy` key:
 
-* `contentSecurityPolicyHeader` -- The header to use for CSP. There are two options:
-  - `Content-Security-Policy-Report-Only` This is the default and means nothing is actually blocked but you get warnings in the console.
-  - `Content-Security-Policy` This makes the browser block any action that conflicts with the Content Security Policy.
-
-* `contentSecurityPolicy` -- This is an object that is used to build the final header value. Each key/value
-  in this object is converted into a key/value pair in the resulting header value.
-
-* `contentSecurityPolicyMeta` -- Boolean. Toggle delivery via meta-tag. Useful for deployments where headers are not available (mobile, S3, etc) or to tether the CSP policy to the client payload (i.e. policy can be updated without reconfiguring servers).
-
-The default `contentSecurityPolicy` value is:
-
-```javascript
-  contentSecurityPolicy: {
-    'default-src': ["'none'"],
-    'script-src':  ["'self'"],
-    'font-src':    ["'self'"],
-    'connect-src': ["'self'"],
-    'img-src':     ["'self'"],
-    'style-src':   ["'self'"],
-    'media-src':   ["'self'"]
+- `delivery?: string[]`
+  CSP is delivered via HTTP Header if includes `"header"` and via meta element if includes `"meta"`.
+  Defaults to `["header"]`.
+- `enabled?: boolean`
+  Controls if addon is enabled at all.
+  Defaults to `true`.
+- `policy?: object`
+  A hash of options representing a Content Security Policy.
+  Defaults to:
+  ```js
+  {
+    'default-src':  ["'none'"],
+    'script-src':   ["'self'"],
+    'font-src':     ["'self'"],
+    'connect-src':  ["'self'"],
+    'img-src':      ["'self'"],
+    'style-src':    ["'self'"],
+    'media-src':    ["'self'"],
   }
-```
-
-Which is translated into:
-
-```
-default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self';
-```
-
-If a directive is omitted it will default to `'self'`. To clear a directive from the default policy above, set it to `null`. The browser will fallback to the `default-src` if a directive does not exist.
+  ```
+  To clear a directive from the default policy, set it to `null`.
+  The browser will fallback to the `default-src` if a directive does not exist.
+- `reportOnly?: boolean`
+  Controls if CSP is used in report only mode. For delivery mode `"header"` this causes `Content-Security-Policy-Report-Only` HTTP header to be used.
+  Can not be used together with delivery mode `"meta"` as this is not supported by CSP spec.
+  Defaults to `true`.
 
 ### Example
 
-If your site uses **Google Fonts**, **Mixpanel** and a custom API at **custom-api.local**:
+If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.local** and you want to deliver the CSP using a meta element:
 
-```javascript
-// config/environment.js
-ENV.contentSecurityPolicy = {
-  // Deny everything by default
-  'default-src': "'none'",
-  
-  // Allow scripts at https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js
-  'script-src': ["'self'", "https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js"],
-  
-  // Allow fonts to be loaded from http://fonts.gstatic.com
-  'font-src': ["'self'", "http://fonts.gstatic.com"],
-  
-  // Allow data (xhr/websocket) from api.mixpanel.com and custom-api.local
-  'connect-src': ["'self'", "https://api.mixpanel.com", "https://custom-api.local"],
-  
-  // Allow images from the origin itself (i.e. current domain)
-  'img-src': "'self'",
-  
-  // Allow CSS loaded from https://fonts.googleapis.com
-  'style-src': ["'self'", "https://fonts.googleapis.com"],
-  
-  // Omit `media-src` from policy
-  // Browser will fallback to default-src for media resources (which is 'none', see above)
-  'media-src': null
+```js
+module.exports = function(environment) {
+  var ENV = {
+    // ...
+    'ember-cli-content-security-policy': {
+      delivery: ['meta'],
+      policy: {
+        // Deny everything by default
+        'default-src': ["'none'"],
+        // Allow scripts at https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js
+        'script-src':  ["'self'", "https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js"],
+        // Allow fonts to be loaded from http://fonts.gstatic.com
+        'font-src': ["'self'", "http://fonts.gstatic.com"],
+        // Allow data (xhr/websocket) from api.mixpanel.com and custom-api.local
+        'connect-src': ["'self'", "https://api.mixpanel.com", "https://custom-api.local"],
+        // Allow images from the origin itself (i.e. current domain)
+        'img-src': ["'self'"],
+        // Allow CSS loaded from https://fonts.googleapis.com
+        'style-src': ["'self'", "https://fonts.googleapis.com"],
+        // Omit `media-src` from policy
+        // Browser will fallback to default-src for media resources (which is 'none', see above)
+        'media-src': null
+      },
+      reportOnly: false
+    }
+  };
+  // ...
 };
 ```
 
@@ -111,9 +109,8 @@ default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style
   the `connect-src` and `script-src` whitelists.
 + Browser support for CSP varies between browsers, for example the meta-tag delivery method is only available
   in newer browsers. See the resources below.
-+ When using the meta-tag, the report-only mode is not available (a restriction in the CSP spec).
 + The Internet Explorer variant of the header (prefixed with `X-`) is automatically added.
-+ When setting the values on `contentSecurityPolicy` object to 'self', 'none', 'unsafe-inline' or 'unsafe-eval', 
++ When setting the values on policy object (`ENV['ember-cli-content-security-policy'].policy`) to 'self', 'none', 'unsafe-inline' or 'unsafe-eval',
   you must include the single quote as shown in the default value above.
 
 ## Resources
