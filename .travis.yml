@@ -38,6 +38,7 @@ jobs:
         - yarn lint:hbs
         - yarn lint:js
         - yarn test
+        - yarn test:node
 
     # we recommend new addons test the current and previous LTS
     # as well as latest stable release (bonus points to beta/canary)

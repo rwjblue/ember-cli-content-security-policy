@@ -184,11 +184,13 @@ module.exports = {
   },
 
   contentFor: function(type, appConfig, existingContent) {
-    if (!appConfig['ember-cli-content-security-policy'].enabled) {
+    let addonConfig = appConfig['ember-cli-content-security-policy'];
+
+    if (!addonConfig.enabled) {
       return;
     }
 
-    if (type === 'head' && appConfig['ember-cli-content-security-policy'].delivery.includes('meta')) {
+    if (type === 'head' && addonConfig.delivery.indexOf('meta') !== -1) {
       this.ui.writeWarnLine(
         'Content Security Policy does not support report only mode if delivered via meta element. ' +
         "Either set `ENV['ember-cli-content-security-policy'].reportOnly` to `false` or remove `'meta'` " +
@@ -196,7 +198,7 @@ module.exports = {
         appConfig['ember-cli-content-security-policy'].reportOnly
       );
 
-      var policyObject = appConfig['ember-cli-content-security-policy'].policy;
+      var policyObject = addonConfig.policy;
       var liveReloadPort = process.env.EMBER_CLI_INJECT_LIVE_RELOAD_PORT;
 
       // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
