@@ -27,13 +27,13 @@ ember install ember-cli-content-security-policy
 
 This addon is configured via your applications `config/environment.js` file using `ember-cli-content-security-policy` key:
 
-- `delivery?: string[]`
-  CSP is delivered via HTTP Header if includes `"header"` and via meta element if includes `"meta"`.
+- `delivery: string[]`
+  CSP is delivered via HTTP Header if delivery includes `"header"` and via meta element if it includes `"meta"`.
   Defaults to `["header"]`.
-- `enabled?: boolean`
+- `enabled: boolean`
   Controls if addon is enabled at all.
   Defaults to `true`.
-- `policy?: object`
+- `policy: object`
   A hash of options representing a Content Security Policy.
   Defaults to:
   ```js
@@ -49,7 +49,7 @@ This addon is configured via your applications `config/environment.js` file usin
   ```
   To clear a directive from the default policy, set it to `null`.
   The browser will fallback to the `default-src` if a directive does not exist.
-- `reportOnly?: boolean`
+- `reportOnly: boolean`
   Controls if CSP is used in report only mode. For delivery mode `"header"` this causes `Content-Security-Policy-Report-Only` HTTP header to be used.
   Can not be used together with delivery mode `"meta"` as this is not supported by CSP spec.
   Defaults to `true`.
