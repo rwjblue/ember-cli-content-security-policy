@@ -4,7 +4,7 @@ const request = denodeify(require('request'));
 const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
 const fs = require('fs-extra');
 
-const cspMetaTagRegExp = /<meta http-equiv="Content-Security-Policy" content=".*">/i;
+const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content=".*">/i;
 
 let defaultConfig;
 async function setConfig(app, configData) {
@@ -67,7 +67,7 @@ describe('delivers CSP accordingly to configuration', function() {
         }
       });
 
-      expect(response.body).to.match(cspMetaTagRegExp);
+      expect(response.body).to.match(CSP_META_TAG_REG_EXP);
     });
   });
 
@@ -121,7 +121,7 @@ describe('delivers CSP accordingly to configuration', function() {
 
       expect(response.headers).to.not.have.key('content-security-policy');
       expect(response.headers).to.not.have.key('content-security-policy-report-only');
-      expect(response.body).to.not.match(cspMetaTagRegExp);
+      expect(response.body).to.not.match(CSP_META_TAG_REG_EXP);
     });
   });
 });
