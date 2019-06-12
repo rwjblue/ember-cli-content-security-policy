@@ -104,18 +104,18 @@ module.exports = {
     if (appConfig.contentSecurityPolicy) {
       defaultConfig.policy = appConfig.contentSecurityPolicy;
     }
-    
-    if (appConfig.contentSecurityPolicyMeta === false) {
-      defaultConfig.delivery = [DELIVERY_HEADER];
+
+    if (appConfig.contentSecurityPolicyMeta) {
+      defaultConfig.delivery = [DELIVERY_META];
     }
-    
+
     if (appConfig.contentSecurityPolicyHeader) {
       defaultConfig.reportOnly = appConfig.contentSecurityPolicyHeader !== CSP_HEADER;
     }
 
     let config = {};
     config[CONFIG_KEY] = defaultConfig;
-    
+
     return config;
   },
 
