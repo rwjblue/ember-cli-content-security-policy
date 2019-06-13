@@ -70,6 +70,26 @@ let appendSourceList = function(policyObject, name, sourceList) {
   policyObject[name] = oldSourceList.join(' ');
 };
 
+// holds the live reload options which are only availabe in `serverMiddleware` hook
+// so that they could be reused in `contentFor` hook
+let liveReloadOptions;
+
+// appends directives needed for Ember CLI live reload feature to policy object
+let allowLiveReload = function(policyObject, { liveReload, liveReloadHost, liveReloadPort, ssl }) {
+  // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
+  // https://github.com/ember-cli/rfcs/pull/22
+  if (!liveReload) {
+    return;
+  }
+
+  ['localhost', '0.0.0.0', liveReloadHost].filter(Boolean).forEach(function(host) {
+    let liveReloadHost = host + ':' + liveReloadPort;
+    let liveReloadProtocol = ssl ? 'wss://' : 'ws://';
+    appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
+    appendSourceList(policyObject, 'script-src', liveReloadHost);
+  });
+}
+
 module.exports = {
   name: require('./package').name,
 
@@ -124,6 +144,9 @@ module.exports = {
     let options = config.options;
     let project = options.project;
 
+    // hold reference to options so that they could be reused in `contentFor` hook
+    liveReloadOptions = options;
+
     app.use(function(req, res, next) {
       let appConfig = project.config(options.environment);
 
@@ -141,16 +164,7 @@ module.exports = {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
-      // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
-      // https://github.com/ember-cli/rfcs/pull/22
-      if (options.liveReload) {
-        ['localhost', '0.0.0.0', options.liveReloadHost].filter(Boolean).forEach(function(host) {
-          let liveReloadHost = host + ':' + options.liveReloadPort;
-          let liveReloadProtocol = options.ssl ? 'wss://' : 'ws://';
-          appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
-          appendSourceList(policyObject, 'script-src', liveReloadHost);
-        });
-      }
+      allowLiveReload(policyObject, options);
 
       // only needed for headers, since report-uri cannot be specified in meta tag
       if (header.indexOf('Report-Only') !== -1 && !('report-uri' in policyObject)) {
@@ -207,22 +221,12 @@ module.exports = {
       );
 
       let policyObject = addonConfig.policy;
-      let liveReloadPort = process.env.EMBER_CLI_INJECT_LIVE_RELOAD_PORT;
-
-      // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
-      // https://github.com/ember-cli/rfcs/pull/22
-      if (policyObject && liveReloadPort) {
-        ['localhost', '0.0.0.0'].forEach(function(host) {
-          var liveReloadHost = host + ':' + liveReloadPort;
-          appendSourceList(policyObject, 'connect-src', 'ws://' + liveReloadHost);
-          appendSourceList(policyObject, 'connect-src', 'wss://' + liveReloadHost);
-          appendSourceList(policyObject, 'script-src', liveReloadHost);
-        });
-      }
 
       if (policyObject && appConfig.environment === 'test') {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
+
+      allowLiveReload(policyObject, liveReloadOptions);
 
       let policyString = buildPolicyString(policyObject);
 
