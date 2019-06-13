@@ -75,16 +75,10 @@ let appendSourceList = function(policyObject, name, sourceList) {
 let liveReloadOptions;
 
 // appends directives needed for Ember CLI live reload feature to policy object
-let allowLiveReload = function(policyObject, { liveReload, liveReloadHost, liveReloadPort, ssl }) {
-  // can be moved to the ember-cli-live-reload addon if RFC-22 is implemented
-  // https://github.com/ember-cli/rfcs/pull/22
-  if (!liveReload) {
-    return;
-  }
-
+let allowLiveReload = function(policyObject, { liveReloadHost, liveReloadPort, secure }) {
   ['localhost', '0.0.0.0', liveReloadHost].filter(Boolean).forEach(function(host) {
     let liveReloadHost = host + ':' + liveReloadPort;
-    let liveReloadProtocol = ssl ? 'wss://' : 'ws://';
+    let liveReloadProtocol = secure ? 'wss://' : 'ws://';
     appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
     appendSourceList(policyObject, 'script-src', liveReloadHost);
   });
@@ -163,8 +157,10 @@ module.exports = {
       if (policyObject) {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
-
-      allowLiveReload(policyObject, options);
+      
+      if (options.liveReload) {
+        allowLiveReload(policyObject, options);
+      }
 
       // only needed for headers, since report-uri cannot be specified in meta tag
       if (header.indexOf('Report-Only') !== -1 && !('report-uri' in policyObject)) {
@@ -226,7 +222,9 @@ module.exports = {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
-      allowLiveReload(policyObject, liveReloadOptions);
+      if (options.liveReload) {
+        allowLiveReload(policyObject, liveReloadOptions);
+      }
 
       let policyString = buildPolicyString(policyObject);
 
