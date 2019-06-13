@@ -32,7 +32,7 @@ async function setConfig(app, configData) {
   await fs.writeFile(configPath, config);
 }
 
-describe('delivers CSP accordingly to configuration', function() {
+describe('e2e: delivers CSP as configured', function() {
   this.timeout(300000);
 
   let app;

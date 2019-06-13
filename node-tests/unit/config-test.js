@@ -4,7 +4,7 @@ const EmberCliContentSecurityPolicy = require('../../index');
 
 const CONFIG_KEY = 'ember-cli-content-security-policy';
 
-describe('configuration', function() {
+describe('unit: configuration', function() {
   let addon;
 
   beforeEach(function() {

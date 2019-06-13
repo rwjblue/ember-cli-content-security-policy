@@ -19,7 +19,7 @@
     "start": "ember serve",
     "test": "ember test",
     "test:all": "ember try:each",
-    "test:node": "mocha node-tests node-tests/acceptance"
+    "test:node": "mocha node-tests/**"
   },
   "dependencies": {
     "body-parser": "^1.17.0",
