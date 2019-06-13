@@ -157,7 +157,7 @@ module.exports = {
       if (policyObject) {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
-      
+
       if (options.liveReload) {
         allowLiveReload(policyObject, options);
       }
@@ -222,7 +222,7 @@ module.exports = {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
-      if (options.liveReload) {
+      if (liveReloadOptions.liveReload) {
         allowLiveReload(policyObject, liveReloadOptions);
       }
 
