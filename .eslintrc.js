@@ -36,7 +36,8 @@ module.exports = {
         'testem.js',
         'blueprints/*/index.js',
         'config/**/*.js',
-        'tests/dummy/config/**/*.js'
+        'tests/dummy/config/**/*.js',
+        'node-tests/**/*.js'
       ],
       excludedFiles: [
         'addon/**',
@@ -45,8 +46,7 @@ module.exports = {
         'tests/dummy/app/**'
       ],
       parserOptions: {
-        sourceType: 'script',
-        ecmaVersion: 2015
+        sourceType: 'script'
       },
       env: {
         browser: false,
@@ -56,6 +56,20 @@ module.exports = {
       rules: Object.assign({}, require('eslint-plugin-node').configs.recommended.rules, {
         // add your custom rules and overrides for node files here
       })
+    },
+    // mocha tests, extending node files configuration
+    {
+      files: [
+        'node-tests/**/*.js'
+      ],
+      globals: {
+        'after': 'readonly',
+        'afterEach': 'readonly',
+        'before': 'readonly',
+        'beforeEach': 'readonly',
+        'describe': 'readonly',
+        'it': 'readonly'
+      }
     }
   ]
 };

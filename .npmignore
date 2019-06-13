@@ -20,6 +20,7 @@
 /config/ember-try.js
 /CONTRIBUTING.md
 /ember-cli-build.js
+/node-tests/
 /testem.js
 /tests/
 /yarn.lock
