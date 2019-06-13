@@ -75,10 +75,10 @@ let appendSourceList = function(policyObject, name, sourceList) {
 let liveReloadOptions;
 
 // appends directives needed for Ember CLI live reload feature to policy object
-let allowLiveReload = function(policyObject, { liveReloadHost, liveReloadPort, secure }) {
+let allowLiveReload = function(policyObject, { liveReloadHost, liveReloadPort, ssl }) {
   ['localhost', '0.0.0.0', liveReloadHost].filter(Boolean).forEach(function(host) {
     let liveReloadHost = host + ':' + liveReloadPort;
-    let liveReloadProtocol = secure ? 'wss://' : 'ws://';
+    let liveReloadProtocol = ssl ? 'wss://' : 'ws://';
     appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
     appendSourceList(policyObject, 'script-src', liveReloadHost);
   });
