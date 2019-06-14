@@ -239,7 +239,7 @@ module.exports = {
       config.policy['frame-src'] = CSP_SELF;
     }
 
-    this.app.project.ui.writeWarnLine(
+    app.project.ui.writeWarnLine(
       'Configuring ember-cli-content-security-policy using `contentSecurityPolicy`, ' +
       '`contentSecurityPolicyHeader` and `contentSecurityPolicyMeta` keys in `config/environment.js` ' +
       'is deprecate and will be removed in v2.0.0. ember-cli-content-security-policy is now configured ' +
