@@ -4,7 +4,7 @@ const request = denodeify(require('request'));
 const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
 const fs = require('fs-extra');
 
-const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content=".*">/i;
+const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content="(.*)">/i;
 
 let defaultConfig;
 async function setConfig(app, configData) {
@@ -47,19 +47,29 @@ describe('e2e: delivers CSP as configured', function() {
   // are not wrapped inside a describe block. Therefore all tests after the first one
   // fail with a "Port 49741 is already in use" error.
   describe('', function() {
+    beforeEach(async function() {
+      await setConfig(app, {
+        'ember-cli-content-security-policy': {
+          delivery: ['header', 'meta'],
+          policy: {
+            'font-src': ["'self'", "http://fonts.gstatic.com"],
+          },
+          reportOnly: false,
+        }
+      });
+
+      await app.startServer({
+        // nonce is always added to CSP in HTTP Header but only
+        // to CSP in meta element for testing environment
+        additionalArguments: ['--environment', 'test']
+      });
+    });
+
     afterEach(async function() {
       await app.stopServer();
     });
 
     it('creates a CSP meta tag if `delivery` option includes `"meta"`', async function() {
-      await setConfig(app, {
-        'ember-cli-content-security-policy': {
-          delivery: ["meta"],
-        }
-      });
-
-      await app.startServer();
-
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
@@ -68,6 +78,19 @@ describe('e2e: delivers CSP as configured', function() {
       });
 
       expect(response.body).to.match(CSP_META_TAG_REG_EXP);
+    });
+
+    it('delivers same policy by meta element as by HTTP header', async function() {
+      let response = await request({
+        url: 'http://localhost:49741',
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
+
+      let cspInHeader = response.headers['content-security-policy'];
+      let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
+      expect(cspInHeader).to.equal(cspInMetaElement);
     });
   });
 
