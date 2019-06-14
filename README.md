@@ -25,7 +25,7 @@ ember install ember-cli-content-security-policy
 
 ## Configuration
 
-This addon is configured via your applications `config/environment.js` file using `ember-cli-content-security-policy` key:
+This addon is configured via your application's `ember-cli-build.js` file using `ember-cli-content-security-policy` key:
 
 - `delivery: string[]`
   CSP is delivered via HTTP Header if delivery includes `"header"` and via meta element if it includes `"meta"`.
@@ -59,9 +59,8 @@ This addon is configured via your applications `config/environment.js` file usin
 If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.local** and you want to deliver the CSP using a meta element:
 
 ```js
-module.exports = function(environment) {
-  var ENV = {
-    // ...
+module.exports = function(defaults) {
+  let app = new EmberApp(defaults, {
     'ember-cli-content-security-policy': {
       delivery: ['meta'],
       policy: {
@@ -83,8 +82,9 @@ module.exports = function(environment) {
       },
       reportOnly: false
     }
-  };
-  // ...
+  });
+
+  return app.toTree();
 };
 ```
 
