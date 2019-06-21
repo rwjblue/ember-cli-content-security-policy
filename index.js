@@ -66,7 +66,8 @@ let appendSourceList = function(policyObject, name, sourceList) {
     oldSourceList = oldValue;
   }
 
-  oldSourceList.push(sourceList);
+  // do not mutate existing source list to prevent leaking state
+  oldSourceList.slice().push(sourceList);
   policyObject[name] = oldSourceList.join(' ');
 };
 
