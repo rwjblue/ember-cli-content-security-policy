@@ -12,7 +12,6 @@ describe('unit: configuration', function() {
 
   it('is enabled by default', function() {
     let config = calculateConfig('development', {}, {}, UIMock);
-
     expect(config.enabled).to.be.true;
   });
 
@@ -23,23 +22,55 @@ describe('unit: configuration', function() {
 
   it('defaults to report only mode', function() {
     let config = calculateConfig('development', {}, {}, UIMock);
-
     expect(config.reportOnly).to.be.true;
+  });
+
+  it('merges policy object with default one', function() {
+    let config = calculateConfig(
+      'development',
+      {
+        'ember-cli-content-security-policy': {
+          policy: {
+            'font-src': ['examples.com']
+          }
+        }
+      },
+      {},
+      UIMock
+    );
+    expect(config.policy).to.deep.equal({
+      'default-src': ["'none'"],
+      'script-src':  ["'self'"],
+      'font-src':    ["examples.com"],
+      'connect-src': ["'self'"],
+      'img-src':     ["'self'"],
+      'style-src':   ["'self'"],
+      'media-src':   ["'self'"],
+    });
   });
 
   describe('legacy support', function() {
     it('supports `contentSecurityPolicy` config option', function() {
-      let policy = {
-        'default-src': ['"self"'],
-        'font-src': ["'self'", "http://fonts.gstatic.com"],
-      };
       let config = calculateConfig(
         'development',
         {},
-        { contentSecurityPolicy: policy },
+        {
+          contentSecurityPolicy: {
+            'default-src': ["'self'"],
+            'font-src': ["'self'", "http://fonts.gstatic.com"],
+          }
+        },
         UIMock
       );
-      expect(config.policy).to.deep.equal(policy);
+      expect(config.policy).to.deep.equal({
+        'default-src': ["'self'"],
+        'script-src':  ["'self'"],
+        'font-src':    ["'self'", "http://fonts.gstatic.com"],
+        'connect-src': ["'self'"],
+        'img-src':     ["'self'"],
+        'style-src':   ["'self'"],
+        'media-src':   ["'self'"],
+      });
     });
 
     it('supports `contentSecurityPolicyMeta` config option', function() {

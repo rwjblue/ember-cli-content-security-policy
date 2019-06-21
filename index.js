@@ -250,7 +250,8 @@ function calculateConfig(environment, buildConfig, runConfig, ui) {
 
   // support legacy configuration options
   if (runConfig.contentSecurityPolicy) {
-    config.policy = runConfig.contentSecurityPolicy;
+    // policy object is merged not replaced
+    Object.assign(config.policy, runConfig.contentSecurityPolicy);
   }
   if (runConfig.contentSecurityPolicyMeta) {
     config.delivery = [DELIVERY_META];
@@ -268,7 +269,16 @@ function calculateConfig(environment, buildConfig, runConfig, ui) {
   }
 
   // apply configuration
-  Object.assign(config, buildConfig[CONFIG_KEY]);
+  // policy object is merged not replaced
+  if (buildConfig[CONFIG_KEY]) {
+    Object.keys(buildConfig[CONFIG_KEY]).forEach((key) => {
+      if (key === 'policy') {
+        Object.assign(config.policy, buildConfig[CONFIG_KEY].policy);
+      } else {
+        config[key] = buildConfig[CONFIG_KEY][key];
+      }
+    });
+  }
 
   return config;
 }
