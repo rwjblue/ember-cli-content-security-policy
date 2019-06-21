@@ -202,74 +202,75 @@ module.exports = {
     return require('./lib/commands');
   },
 
-  included: function(app) {
-    this.calculateConfig(app);
-  },
-
   // Configuration is only available by public API in `app` passed to `included` hook.
   // We calculate configuration in `included` hook and use it in `serverMiddleware`
   // and `contentFor` hooks, which are executed later. This is necessary cause Ember CLI
   // does not provide a public API to read build time configuation (`ember-cli-build.js`)
   // yet. `this._findHost(this).options` seems to be the only reliable way to get it in
   // these hooks but is private API.
-  calculateConfig(app) {
-    let environment = app.env;
-    // ember-cli-build.js
-    let buildConfig = app.options || {};
-    // config/environment.js
-    let runConfig = app.project.config();
-
-    let config = {
-      delivery: [DELIVERY_HEADER],
-      enabled: true,
-      policy: {
-        'default-src':  [CSP_NONE],
-        'script-src':   [CSP_SELF],
-        'font-src':     [CSP_SELF],
-        'connect-src':  [CSP_SELF],
-        'img-src':      [CSP_SELF],
-        'style-src':    [CSP_SELF],
-        'media-src':    [CSP_SELF],
-      },
-      reportOnly: true,
-    };
-
-    // testem requires frame-src to run
-    if (environment === 'test') {
-      config.policy['frame-src'] = CSP_SELF;
-    }
-
-    app.project.ui.writeWarnLine(
-      'Configuring ember-cli-content-security-policy using `contentSecurityPolicy`, ' +
-      '`contentSecurityPolicyHeader` and `contentSecurityPolicyMeta` keys in `config/environment.js` ' +
-      'is deprecate and will be removed in v2.0.0. ember-cli-content-security-policy is now configured ' +
-      'using `ember-cli-build.js`. Please find detailed information about new configuration options ' +
-      'in addon documentation at https://github.com/rwjblue/ember-cli-content-security-policy#ember-cli-content-security-policy.',
-      !runConfig.contentSecurityPolicy || !runConfig.contentSecurityPolicyHeader || !runConfig.contentSecurityPolicyMeta
-    );
-
-    // support legacy configuration options
-    if (runConfig.contentSecurityPolicy) {
-      config.policy = runConfig.contentSecurityPolicy;
-    }
-    if (runConfig.contentSecurityPolicyMeta) {
-      config.delivery = [DELIVERY_META];
-    }
-    if (runConfig.contentSecurityPolicyHeader) {
-      config.reportOnly = runConfig.contentSecurityPolicyHeader !== CSP_HEADER;
-    }
-
-    // live reload configuration is required to allow the hosts used by it
-    config.liveReload = {
-      enabled: buildConfig.liveReload,
-      host: buildConfig.liveReloadHost,
-      port: buildConfig.liveReloadPort,
-      ssl: buildConfig.ssl
-    }
-
-    // apply configuration
-    Object.assign(config, buildConfig[CONFIG_KEY]);
-
-    this._config = config;
+  included: function(app) {
+    this._config = calculateConfig(app);
   },
 };
+
+function calculateConfig(app) {
+  let environment = app.env;
+  // ember-cli-build.js
+  let buildConfig = app.options || {};
+  // config/environment.js
+  let runConfig = app.project.config();
+
+  let config = {
+    delivery: [DELIVERY_HEADER],
+    enabled: true,
+    policy: {
+      'default-src':  [CSP_NONE],
+      'script-src':   [CSP_SELF],
+      'font-src':     [CSP_SELF],
+      'connect-src':  [CSP_SELF],
+      'img-src':      [CSP_SELF],
+      'style-src':    [CSP_SELF],
+      'media-src':    [CSP_SELF],
+    },
+    reportOnly: true,
+  };
+
+  // testem requires frame-src to run
+  if (environment === 'test') {
+    config.policy['frame-src'] = CSP_SELF;
+  }
+
+  app.project.ui.writeWarnLine(
+    'Configuring ember-cli-content-security-policy using `contentSecurityPolicy`, ' +
+    '`contentSecurityPolicyHeader` and `contentSecurityPolicyMeta` keys in `config/environment.js` ' +
+    'is deprecate and will be removed in v2.0.0. ember-cli-content-security-policy is now configured ' +
+    'using `ember-cli-build.js`. Please find detailed information about new configuration options ' +
+    'in addon documentation at https://github.com/rwjblue/ember-cli-content-security-policy#ember-cli-content-security-policy.',
+    !runConfig.contentSecurityPolicy || !runConfig.contentSecurityPolicyHeader || !runConfig.contentSecurityPolicyMeta
+  );
+
+  // support legacy configuration options
+  if (runConfig.contentSecurityPolicy) {
+    config.policy = runConfig.contentSecurityPolicy;
+  }
+  if (runConfig.contentSecurityPolicyMeta) {
+    config.delivery = [DELIVERY_META];
+  }
+  if (runConfig.contentSecurityPolicyHeader) {
+    config.reportOnly = runConfig.contentSecurityPolicyHeader !== CSP_HEADER;
+  }
+
+  // live reload configuration is required to allow the hosts used by it
+  config.liveReload = {
+    enabled: buildConfig.liveReload,
+    host: buildConfig.liveReloadHost,
+    port: buildConfig.liveReloadPort,
+    ssl: buildConfig.ssl
+  }
+
+  // apply configuration
+  Object.assign(config, buildConfig[CONFIG_KEY]);
+
+  return config;
+}
+module.exports._calculateConfig = calculateConfig;

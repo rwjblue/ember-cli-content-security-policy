@@ -1,6 +1,5 @@
 const expect = require('chai').expect;
-const AddonModel = require('ember-cli/lib/models/addon');
-const EmberCliContentSecurityPolicy = require('../../index');
+const calculateConfig = require('../../index')._calculateConfig;
 
 function getAppMock(customOptions = {}) {
   let options = Object.assign({
@@ -26,31 +25,21 @@ function getAppMock(customOptions = {}) {
 }
 
 describe('unit: configuration', function() {
-  let addon;
-
-  beforeEach(function() {
-    let Addon = AddonModel
-      .extend({ root: '.' })
-      .extend(EmberCliContentSecurityPolicy);
-
-    addon = new Addon();
-  });
-
   it('is enabled by default', function() {
-    addon.calculateConfig(getAppMock());
+    let config = calculateConfig(getAppMock());
 
-    expect(addon._config.enabled).to.be.true;
+    expect(config.enabled).to.be.true;
   });
 
   it('delivers CSP by HTTP header by default', function() {
-    addon.calculateConfig(getAppMock());
-    expect(addon._config.delivery).to.deep.equal(['header']);
+    let config = calculateConfig(getAppMock());
+    expect(config.delivery).to.deep.equal(['header']);
   });
 
   it('defaults to report only mode', function() {
-    addon.calculateConfig(getAppMock());
+    let config = calculateConfig(getAppMock());
 
-    expect(addon._config.reportOnly).to.be.true;
+    expect(config.reportOnly).to.be.true;
   });
 
   describe('legacy support', function() {
@@ -59,44 +48,44 @@ describe('unit: configuration', function() {
         'default-src': ['"self"'],
         'font-src': ["'self'", "http://fonts.gstatic.com"],
       };
-      addon.calculateConfig(getAppMock({
+      let config = calculateConfig(getAppMock({
         runtimeConfig: {
           contentSecurityPolicy: policy,
         },
       }));
-      expect(addon._config.policy).to.deep.equal(policy);
+      expect(config.policy).to.deep.equal(policy);
     });
 
     it('supports `contentSecurityPolicyMeta` config option', function() {
-      addon.calculateConfig(getAppMock({
+      let config = calculateConfig(getAppMock({
         runtimeConfig: {
           contentSecurityPolicyMeta: true,
         },
       }));
-      expect(addon._config.delivery).to.include('meta');
+      expect(config.delivery).to.include('meta');
 
-      addon.calculateConfig(getAppMock({
+      config = calculateConfig(getAppMock({
         runtimeConfig: {
           contentSecurityPolicyMeta: false,
         },
       }));
-      expect(addon._config.delivery).to.not.include('meta');
+      expect(config.delivery).to.not.include('meta');
     });
 
     it('supports `contentSecurityPolicyHeader` config', function() {
-      addon.calculateConfig(getAppMock({
+      let config = calculateConfig(getAppMock({
         runtimeConfig: {
           contentSecurityPolicyHeader: 'Content-Security-Policy-Report-Only',
         },
       }));
-      expect(addon._config.reportOnly).to.be.true;
+      expect(config.reportOnly).to.be.true;
 
-      addon.calculateConfig(getAppMock({
+      config = calculateConfig(getAppMock({
         runtimeConfig: {
           contentSecurityPolicyHeader: 'Content-Security-Policy',
         },
       }));
-      expect(addon._config.reportOnly).to.be.false;
+      expect(config.reportOnly).to.be.false;
     });
   });
 });
