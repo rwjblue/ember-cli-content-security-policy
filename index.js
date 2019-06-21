@@ -209,17 +209,16 @@ module.exports = {
   // yet. `this._findHost(this).options` seems to be the only reliable way to get it in
   // these hooks but is private API.
   included: function(app) {
-    this._config = calculateConfig(app);
+    let environment = app.env;
+    let buildConfig = app.options || {};  // ember-cli-build.js
+    let runConfig = app.project.config(); // config/environment.js
+    let ui = app.project.ui;
+
+    this._config = calculateConfig(environment, buildConfig, runConfig, ui);
   },
 };
 
-function calculateConfig(app) {
-  let environment = app.env;
-  // ember-cli-build.js
-  let buildConfig = app.options || {};
-  // config/environment.js
-  let runConfig = app.project.config();
-
+function calculateConfig(environment, buildConfig, runConfig, ui) {
   let config = {
     delivery: [DELIVERY_HEADER],
     enabled: true,
@@ -240,7 +239,7 @@ function calculateConfig(app) {
     config.policy['frame-src'] = CSP_SELF;
   }
 
-  app.project.ui.writeWarnLine(
+  ui.writeWarnLine(
     'Configuring ember-cli-content-security-policy using `contentSecurityPolicy`, ' +
     '`contentSecurityPolicyHeader` and `contentSecurityPolicyMeta` keys in `config/environment.js` ' +
     'is deprecate and will be removed in v2.0.0. ember-cli-content-security-policy is now configured ' +
