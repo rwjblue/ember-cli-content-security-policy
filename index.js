@@ -67,7 +67,8 @@ let appendSourceList = function(policyObject, name, sourceList) {
   }
 
   // do not mutate existing source list to prevent leaking state between different hooks
-  let newSourceList = oldSourceList.slice().push(sourceList);
+  let newSourceList = oldSourceList.slice();
+  newSourceList.push(sourceList);
   policyObject[name] = newSourceList.join(' ');
 };
 
