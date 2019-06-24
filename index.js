@@ -66,9 +66,9 @@ let appendSourceList = function(policyObject, name, sourceList) {
     oldSourceList = oldValue;
   }
 
-  // do not mutate existing source list to prevent leaking state
-  oldSourceList.slice().push(sourceList);
-  policyObject[name] = oldSourceList.join(' ');
+  // do not mutate existing source list to prevent leaking state between different hooks
+  let newSourceList = oldSourceList.slice().push(sourceList);
+  policyObject[name] = newSourceList.join(' ');
 };
 
 // appends directives needed for Ember CLI live reload feature to policy object
