@@ -66,91 +66,40 @@ let appendSourceList = function(policyObject, name, sourceList) {
     oldSourceList = oldValue;
   }
 
-  oldSourceList.push(sourceList);
-  policyObject[name] = oldSourceList.join(' ');
+  // do not mutate existing source list to prevent leaking state between different hooks
+  let newSourceList = oldSourceList.slice();
+  newSourceList.push(sourceList);
+  policyObject[name] = newSourceList.join(' ');
 };
 
-// holds the live reload options which are only availabe in `serverMiddleware` hook
-// so that they could be reused in `contentFor` hook
-let liveReloadOptions;
-
 // appends directives needed for Ember CLI live reload feature to policy object
-let allowLiveReload = function(policyObject, { liveReloadHost, liveReloadPort, ssl }) {
-  ['localhost', '0.0.0.0', liveReloadHost].filter(Boolean).forEach(function(host) {
-    let liveReloadHost = host + ':' + liveReloadPort;
-    let liveReloadProtocol = ssl ? 'wss://' : 'ws://';
-    appendSourceList(policyObject, 'connect-src', liveReloadProtocol + liveReloadHost);
-    appendSourceList(policyObject, 'script-src', liveReloadHost);
+let allowLiveReload = function(policyObject) {
+  let { hostname, port, ssl } = this._config.liveReload;
+
+  ['localhost', '0.0.0.0', hostname].filter(Boolean).forEach(function(hostname) {
+    let protocol = ssl ? 'wss://' : 'ws://';
+    let host = hostname + ':' + port;
+    appendSourceList(policyObject, 'connect-src', protocol + host);
+    appendSourceList(policyObject, 'script-src', host);
   });
 }
 
 module.exports = {
   name: require('./package').name,
 
-  config: function(environment, appConfig) {
-    let defaultConfig = {
-      delivery: [DELIVERY_HEADER],
-      enabled: true,
-      policy: {
-        'default-src':  [CSP_NONE],
-        'script-src':   [CSP_SELF],
-        'font-src':     [CSP_SELF],
-        'connect-src':  [CSP_SELF],
-        'img-src':      [CSP_SELF],
-        'style-src':    [CSP_SELF],
-        'media-src':    [CSP_SELF],
-      },
-      reportOnly: true,
-    };
-
-    // testem requires frame-src to run
-    if (environment === 'test') {
-      defaultConfig.policy['frame-src'] = CSP_SELF;
-    }
-
-    this.ui.writeWarnLine(
-      'Using `contentSecurityPolicy`, `contentSecurityPolicyHeader` and `contentSecurityPolicyMeta` keys ' +
-      'to configure ember-cli-content-security-policy is deprecate and will be removed in v2.0.0. ' +
-      'Please find detailed information about new configuration options in addon documentation.',
-      !appConfig.contentSecurityPolicy || !appConfig.contentSecurityPolicyHeader || !appConfig.contentSecurityPolicyMeta
-    );
-
-    if (appConfig.contentSecurityPolicy) {
-      defaultConfig.policy = appConfig.contentSecurityPolicy;
-    }
-
-    if (appConfig.contentSecurityPolicyMeta) {
-      defaultConfig.delivery = [DELIVERY_META];
-    }
-
-    if (appConfig.contentSecurityPolicyHeader) {
-      defaultConfig.reportOnly = appConfig.contentSecurityPolicyHeader !== CSP_HEADER;
-    }
-
-    let config = {};
-    config[CONFIG_KEY] = defaultConfig;
-
-    return config;
-  },
-
   serverMiddleware: function(config) {
     let app = config.app;
     let options = config.options;
-    let project = options.project;
 
-    // hold reference to options so that they could be reused in `contentFor` hook
-    liveReloadOptions = options;
-
-    app.use(function(req, res, next) {
-      let appConfig = project.config(options.environment);
-
-      if (!appConfig[CONFIG_KEY].enabled) {
+    app.use((req, res, next) => {
+      if (!this._config.enabled) {
         next();
         return;
       }
 
-      let header = appConfig[CONFIG_KEY].reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
-      let policyObject = appConfig[CONFIG_KEY].policy;
+      let header = this._config.reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
+      // clone policy object cause config should not be mutated
+      let policyObject = Object.assign({}, this._config.policy);
 
       // the local server will never run for production builds, so no danger in adding the nonce all the time
       // even so it's only needed if tests are executed by opening `http://localhost:4200/tests`
@@ -158,7 +107,7 @@ module.exports = {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
-      if (options.liveReload) {
+      if (this._config.liveReload.enabled) {
         allowLiveReload(policyObject, options);
       }
 
@@ -202,30 +151,29 @@ module.exports = {
   },
 
   contentFor: function(type, appConfig, existingContent) {
-    let addonConfig = appConfig[CONFIG_KEY];
-
-    if (!addonConfig.enabled) {
+    if (!this._config.enabled) {
       return;
     }
 
-    if (type === 'head' && addonConfig.delivery.indexOf(DELIVERY_META) !== -1) {
+    if (type === 'head' && this._config.delivery.indexOf(DELIVERY_META) !== -1) {
       this.ui.writeWarnLine(
         'Content Security Policy does not support report only mode if delivered via meta element. ' +
         "Either set `ENV['ember-cli-content-security-policy'].reportOnly` to `false` or remove `'meta'` " +
         "from `ENV['ember-cli-content-security-policy'].delivery`.",
-        appConfig[CONFIG_KEY].reportOnly
+        this._config.reportOnly
       );
 
-      let policyObject = addonConfig.policy;
+      let policyObject = Object.assign({}, this._config.policy);
 
       if (policyObject && appConfig.environment === 'test') {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
-      if (liveReloadOptions.liveReload) {
-        allowLiveReload(policyObject, liveReloadOptions);
+      if (this._config.liveReload.enabled) {
+        allowLiveReload(policyObject);
       }
 
+      // clone policy object cause config should not be mutated
       let policyString = buildPolicyString(policyObject);
 
       unsupportedDirectives(policyObject).forEach(function(name) {
@@ -254,5 +202,86 @@ module.exports = {
 
   includedCommands: function() {
     return require('./lib/commands');
-  }
+  },
+
+  // Configuration is only available by public API in `app` passed to `included` hook.
+  // We calculate configuration in `included` hook and use it in `serverMiddleware`
+  // and `contentFor` hooks, which are executed later. This is necessary cause Ember CLI
+  // does not provide a public API to read build time configuation (`ember-cli-build.js`)
+  // yet. `this._findHost(this).options` seems to be the only reliable way to get it in
+  // these hooks but is private API.
+  included: function(app) {
+    let environment = app.env;
+    let buildConfig = app.options || {};  // ember-cli-build.js
+    let runConfig = app.project.config(); // config/environment.js
+    let ui = app.project.ui;
+
+    this._config = calculateConfig(environment, buildConfig, runConfig, ui);
+  },
 };
+
+function calculateConfig(environment, buildConfig, runConfig, ui) {
+  let config = {
+    delivery: [DELIVERY_HEADER],
+    enabled: true,
+    policy: {
+      'default-src':  [CSP_NONE],
+      'script-src':   [CSP_SELF],
+      'font-src':     [CSP_SELF],
+      'connect-src':  [CSP_SELF],
+      'img-src':      [CSP_SELF],
+      'style-src':    [CSP_SELF],
+      'media-src':    [CSP_SELF],
+    },
+    reportOnly: true,
+  };
+
+  // testem requires frame-src to run
+  if (environment === 'test') {
+    config.policy['frame-src'] = CSP_SELF;
+  }
+
+  ui.writeWarnLine(
+    'Configuring ember-cli-content-security-policy using `contentSecurityPolicy`, ' +
+    '`contentSecurityPolicyHeader` and `contentSecurityPolicyMeta` keys in `config/environment.js` ' +
+    'is deprecate and will be removed in v2.0.0. ember-cli-content-security-policy is now configured ' +
+    'using `ember-cli-build.js`. Please find detailed information about new configuration options ' +
+    'in addon documentation at https://github.com/rwjblue/ember-cli-content-security-policy#ember-cli-content-security-policy.',
+    !runConfig.contentSecurityPolicy || !runConfig.contentSecurityPolicyHeader || !runConfig.contentSecurityPolicyMeta
+  );
+
+  // support legacy configuration options
+  if (runConfig.contentSecurityPolicy) {
+    // policy object is merged not replaced
+    Object.assign(config.policy, runConfig.contentSecurityPolicy);
+  }
+  if (runConfig.contentSecurityPolicyMeta) {
+    config.delivery = [DELIVERY_META];
+  }
+  if (runConfig.contentSecurityPolicyHeader) {
+    config.reportOnly = runConfig.contentSecurityPolicyHeader !== CSP_HEADER;
+  }
+
+  // live reload configuration is required to allow the hosts used by it
+  config.liveReload = {
+    enabled: buildConfig.liveReload,
+    host: buildConfig.liveReloadHost,
+    port: buildConfig.liveReloadPort,
+    ssl: buildConfig.ssl
+  }
+
+  // apply configuration
+  // policy object is merged not replaced
+  if (buildConfig[CONFIG_KEY]) {
+    Object.keys(buildConfig[CONFIG_KEY]).forEach((key) => {
+      if (key === 'policy') {
+        Object.assign(config.policy, buildConfig[CONFIG_KEY].policy);
+      } else {
+        config[key] = buildConfig[CONFIG_KEY][key];
+      }
+    });
+  }
+
+  return config;
+}
+module.exports._calculateConfig = calculateConfig;

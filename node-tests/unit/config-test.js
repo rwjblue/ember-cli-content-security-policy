@@ -1,75 +1,107 @@
 const expect = require('chai').expect;
-const AddonModel = require('ember-cli/lib/models/addon');
-const EmberCliContentSecurityPolicy = require('../../index');
-
-const CONFIG_KEY = 'ember-cli-content-security-policy';
+const calculateConfig = require('../../index')._calculateConfig;
 
 describe('unit: configuration', function() {
-  let addon;
+  let UIMock;
 
-  beforeEach(function() {
-    let ui =  {
+  beforeEach(() => {
+    UIMock = {
       writeWarnLine() {},
-    };
-    let project = { ui };
-    let parent = {};
-
-    let Addon = AddonModel
-      .extend({ root: '.' })
-      .extend(EmberCliContentSecurityPolicy);
-
-    addon = new Addon(parent, project);
+    }
   });
 
   it('is enabled by default', function() {
-    let config = addon.config('development', {});
-    expect(config[CONFIG_KEY].enabled).to.be.true;
+    let config = calculateConfig('development', {}, {}, UIMock);
+    expect(config.enabled).to.be.true;
   });
 
   it('delivers CSP by HTTP header by default', function() {
-    let config = addon.config('development', {});
-    expect(config[CONFIG_KEY].delivery).to.deep.equal(['header']);
+    let config = calculateConfig('development', {}, {}, UIMock);
+    expect(config.delivery).to.deep.equal(['header']);
   });
 
   it('defaults to report only mode', function() {
-    let config = addon.config('development', {});
-    expect(config[CONFIG_KEY].reportOnly).to.be.true;
+    let config = calculateConfig('development', {}, {}, UIMock);
+    expect(config.reportOnly).to.be.true;
+  });
+
+  it('merges policy object with default one', function() {
+    let config = calculateConfig(
+      'development',
+      {
+        'ember-cli-content-security-policy': {
+          policy: {
+            'font-src': ['examples.com']
+          }
+        }
+      },
+      {},
+      UIMock
+    );
+    expect(config.policy).to.deep.equal({
+      'default-src': ["'none'"],
+      'script-src':  ["'self'"],
+      'font-src':    ["examples.com"],
+      'connect-src': ["'self'"],
+      'img-src':     ["'self'"],
+      'style-src':   ["'self'"],
+      'media-src':   ["'self'"],
+    });
   });
 
   describe('legacy support', function() {
     it('supports `contentSecurityPolicy` config option', function() {
-      let policy = {
-        'default-src': ['"self"'],
-        'font-src': ["'self'", "http://fonts.gstatic.com"],
-      };
-      let config = addon.config('development', {
-        contentSecurityPolicy: policy,
+      let config = calculateConfig(
+        'development',
+        {},
+        {
+          contentSecurityPolicy: {
+            'default-src': ["'self'"],
+            'font-src': ["'self'", "http://fonts.gstatic.com"],
+          }
+        },
+        UIMock
+      );
+      expect(config.policy).to.deep.equal({
+        'default-src': ["'self'"],
+        'script-src':  ["'self'"],
+        'font-src':    ["'self'", "http://fonts.gstatic.com"],
+        'connect-src': ["'self'"],
+        'img-src':     ["'self'"],
+        'style-src':   ["'self'"],
+        'media-src':   ["'self'"],
       });
-      expect(config[CONFIG_KEY].policy).to.deep.equal(policy);
     });
 
     it('supports `contentSecurityPolicyMeta` config option', function() {
-      let config = addon.config('development', {
-        contentSecurityPolicyMeta: true,
-      });
-      expect(config[CONFIG_KEY].delivery).to.include('meta');
+      let config = calculateConfig('development', {}, { contentSecurityPolicyMeta: true }, UIMock);
+      expect(config.delivery).to.include('meta');
 
-      config = addon.config('development', {
-        contentSecurityPolicyMeta: false,
-      });
-      expect(config[CONFIG_KEY].delivery).to.not.include('meta');
+      config = calculateConfig(
+        'development',
+        {},
+        { contentSecurityPolicyMeta: false },
+        UIMock
+      );
+      expect(config.delivery).to.not.include('meta');
     });
 
     it('supports `contentSecurityPolicyHeader` config', function() {
-      let config = addon.config('development', {
-        contentSecurityPolicyHeader: 'Content-Security-Policy-Report-Only',
-      });
-      expect(config[CONFIG_KEY].reportOnly).to.be.true;
+      let config = calculateConfig(
+        'development',
+        {},
+        { contentSecurityPolicyHeader: 'Content-Security-Policy-Report-Only' },
+        UIMock
+      );
+      expect(config.reportOnly).to.be.true;
 
-      config = addon.config('development', {
-        contentSecurityPolicyHeader: 'Content-Security-Policy',
-      });
-      expect(config[CONFIG_KEY].reportOnly).to.be.false;
+      config = calculateConfig(
+        'development',
+        {},
+        { contentSecurityPolicyHeader: 'Content-Security-Policy' },
+        UIMock
+      );
+      expect(config.reportOnly).to.be.false;
     });
   });
 });
