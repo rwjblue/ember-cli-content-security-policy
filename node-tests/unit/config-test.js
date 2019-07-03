@@ -25,12 +25,13 @@ describe('unit: configuration', function() {
     expect(config.reportOnly).to.be.true;
   });
 
-  it('merges policy object with default one', function() {
+  it('replaces default policy object with application config', function() {
     let config = calculateConfig(
       'development',
       {
         'ember-cli-content-security-policy': {
           policy: {
+            'default-src': ["'self'"],
             'font-src': ['examples.com']
           }
         }
@@ -39,13 +40,8 @@ describe('unit: configuration', function() {
       UIMock
     );
     expect(config.policy).to.deep.equal({
-      'default-src': ["'none'"],
-      'script-src':  ["'self'"],
+      'default-src': ["'self'"],
       'font-src':    ["examples.com"],
-      'connect-src': ["'self'"],
-      'img-src':     ["'self'"],
-      'style-src':   ["'self'"],
-      'media-src':   ["'self'"],
     });
   });
 
