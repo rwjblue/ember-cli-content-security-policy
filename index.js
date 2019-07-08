@@ -246,7 +246,7 @@ function calculateConfig(environment, buildConfig, runConfig, ui) {
     '`contentSecurityPolicyHeader` and `contentSecurityPolicyMeta` keys in `config/environment.js` ' +
     'is deprecate and will be removed in v2.0.0. ember-cli-content-security-policy is now configured ' +
     'using `ember-cli-build.js`. Please find detailed information about new configuration options ' +
-    'in addon documentation at https://github.com/rwjblue/ember-cli-content-security-policy#ember-cli-content-security-policy.',
+    'in addon documentation at https://github.com/rwjblue/ember-cli-content-security-policy/blob/master/DEPRECATIONS.md.',
     !runConfig.contentSecurityPolicy || !runConfig.contentSecurityPolicyHeader || !runConfig.contentSecurityPolicyMeta
   );
 
