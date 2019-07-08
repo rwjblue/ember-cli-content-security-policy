@@ -1,6 +1,6 @@
 # Deprecations
 
-## Configuration in config/environment.js
+## Configuration is moved to ember-cli-build.js
 
 Configuration has been moved from runtime config in `config/environment.js` to build-time in `ember-cli-build.js`.
 The configuration keys have been changed as well. Please follow these steps for migrating your existing configuration:
