@@ -1,5 +1,5 @@
 const expect = require('chai').expect;
-const calculateConfig = require('../../index')._calculateConfig;
+const { calculateConfig } = require('../../lib/utils');
 
 describe('unit: configuration', function() {
   let UIMock;
