@@ -11,17 +11,17 @@ describe('unit: configuration', function() {
   });
 
   it('is enabled by default', function() {
-    let config = calculateConfig('development', {}, {}, UIMock);
+    let config = calculateConfig('development', {}, {}, {}, UIMock);
     expect(config.enabled).to.be.true;
   });
 
   it('delivers CSP by HTTP header by default', function() {
-    let config = calculateConfig('development', {}, {}, UIMock);
+    let config = calculateConfig('development', {}, {}, {}, UIMock);
     expect(config.delivery).to.deep.equal(['header']);
   });
 
   it('defaults to report only mode', function() {
-    let config = calculateConfig('development', {}, {}, UIMock);
+    let config = calculateConfig('development', {}, {}, {}, UIMock);
     expect(config.reportOnly).to.be.true;
   });
 
@@ -29,13 +29,12 @@ describe('unit: configuration', function() {
     let config = calculateConfig(
       'development',
       {
-        'ember-cli-content-security-policy': {
-          policy: {
-            'default-src': ["'self'"],
-            'font-src': ['examples.com']
-          }
+        policy: {
+          'default-src': ["'self'"],
+          'font-src': ['examples.com']
         }
       },
+      {},
       {},
       UIMock
     );
@@ -49,6 +48,7 @@ describe('unit: configuration', function() {
     it('supports `contentSecurityPolicy` config option', function() {
       let config = calculateConfig(
         'development',
+        {},
         {},
         {
           contentSecurityPolicy: {
@@ -70,11 +70,18 @@ describe('unit: configuration', function() {
     });
 
     it('supports `contentSecurityPolicyMeta` config option', function() {
-      let config = calculateConfig('development', {}, { contentSecurityPolicyMeta: true }, UIMock);
+      let config = calculateConfig(
+        'development',
+        {},
+        {},
+        { contentSecurityPolicyMeta: true },
+        UIMock
+      );
       expect(config.delivery).to.include('meta');
 
       config = calculateConfig(
         'development',
+        {},
         {},
         { contentSecurityPolicyMeta: false },
         UIMock
@@ -86,6 +93,7 @@ describe('unit: configuration', function() {
       let config = calculateConfig(
         'development',
         {},
+        {},
         { contentSecurityPolicyHeader: 'Content-Security-Policy-Report-Only' },
         UIMock
       );
@@ -93,6 +101,7 @@ describe('unit: configuration', function() {
 
       config = calculateConfig(
         'development',
+        {},
         {},
         { contentSecurityPolicyHeader: 'Content-Security-Policy' },
         UIMock

@@ -1,9 +1,7 @@
 'use strict';
 let chalk = require('chalk');
 
-let buildPolicyString = require('./lib/utils')['buildPolicyString'];
-
-const CONFIG_KEY = 'ember-cli-content-security-policy';
+let { buildPolicyString, readConfig } = require('./lib/utils');
 
 const CSP_SELF        = "'self'";
 const CSP_NONE        = "'none'";
@@ -212,15 +210,16 @@ module.exports = {
   // these hooks but is private API.
   included: function(app) {
     let environment = app.env;
-    let buildConfig = app.options || {};  // ember-cli-build.js
+    let ownConfig = readConfig(app.project.root, environment);  // config/content-security-policy.js
+    let buildConfig = app.options || {}; // build-time configuration including livereload and ssl options
     let runConfig = app.project.config(); // config/environment.js
     let ui = app.project.ui;
 
-    this._config = calculateConfig(environment, buildConfig, runConfig, ui);
+    this._config = calculateConfig(environment, ownConfig, buildConfig, runConfig, ui);
   },
 };
 
-function calculateConfig(environment, buildConfig, runConfig, ui) {
+function calculateConfig(environment, ownConfig, buildConfig, runConfig, ui) {
   let config = {
     delivery: [DELIVERY_HEADER],
     enabled: true,
@@ -271,7 +270,7 @@ function calculateConfig(environment, buildConfig, runConfig, ui) {
   }
 
   // apply configuration
-  Object.assign(config, buildConfig[CONFIG_KEY]);
+  Object.assign(config, ownConfig);
 
   return config;
 }
