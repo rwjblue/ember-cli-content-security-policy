@@ -6,11 +6,25 @@ const fs = require('fs-extra');
 
 const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content="(.*)">/i;
 
+function getConfigPath(app) {
+  return app.filePath('config/content-security-policy.js');
+}
+
 async function setConfig(app, config) {
-  let file = app.filePath('config/content-security-policy.js');
+  let file = getConfigPath(app);
   let content = `module.exports = function() { return ${JSON.stringify(config)}; }`;
 
   await fs.writeFile(file, content);
+}
+
+async function removeConfig(app) {
+  let file = getConfigPath(app);
+
+  if (!fs.existsSync(file)) {
+    return;
+  }
+
+  await fs.remove(file);
 }
 
 describe('e2e: delivers CSP as configured', function() {
@@ -22,6 +36,10 @@ describe('e2e: delivers CSP as configured', function() {
     app = new AddonTestApp();
 
     await app.create('default', { noFixtures: true });
+  });
+
+  afterEach(async function() {
+    await removeConfig(app);
   });
 
   // Server isn't shutdown successfully if `app.startServer()` and `app.stopServer()`
@@ -120,6 +138,36 @@ describe('e2e: delivers CSP as configured', function() {
       expect(response.headers).to.not.have.key('content-security-policy');
       expect(response.headers).to.not.have.key('content-security-policy-report-only');
       expect(response.body).to.not.match(CSP_META_TAG_REG_EXP);
+    });
+  });
+
+  describe('supports live reload', function() {
+    afterEach(async function() {
+      await app.stopServer();
+    });
+
+    it('adds CSP directives required by live reload', async function() {
+      await setConfig(app, {
+        delivery: ['header', 'meta'],
+      });
+
+      await app.startServer();
+
+      let response = await request({
+        url: 'http://localhost:49741',
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
+
+      let cspInHeader = response.headers['content-security-policy-report-only'];
+      let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
+      [cspInHeader, cspInMetaElement].forEach((csp) => {
+        expect(csp).to.match(/connect-src [^;]* ws:\/\/0.0.0.0:49741/);
+        expect(csp).to.match(/connect-src [^;]* ws:\/\/localhost:49741/);
+        expect(csp).to.match(/script-src [^;]* 0.0.0.0:49741/);
+        expect(csp).to.match(/script-src [^;]* localhost:49741/);
+      });
     });
   });
 });
