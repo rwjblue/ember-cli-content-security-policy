@@ -59,6 +59,8 @@ This addon is configured via `config/content-security-policy.js` file.
 If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.local** and you want to deliver the CSP using a meta element:
 
 ```js
+// config/content-security-policy.js
+
 module.exports = function(environment) {
   return {
     delivery: ['meta'],
