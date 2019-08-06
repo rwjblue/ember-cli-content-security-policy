@@ -210,7 +210,7 @@ module.exports = {
   // these hooks but is private API.
   included: function(app) {
     let environment = app.env;
-    let ownConfig = readConfig(app.project.root, environment);  // config/content-security-policy.js
+    let ownConfig = readConfig(app.project, environment);  // config/content-security-policy.js
     let buildConfig = app.options || {}; // build-time configuration including livereload and ssl options
     let runConfig = app.project.config(); // config/environment.js
     let ui = app.project.ui;
