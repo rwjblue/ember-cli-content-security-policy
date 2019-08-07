@@ -32,7 +32,7 @@ This addon is configured via `config/content-security-policy.js` file.
 interface EmberCLIContentSecurityPolicyConfig {
   // CSP is delivered via HTTP Header if delivery includes `"header"` and via
   // meta element if it includes `"meta"`.
-  delivery?: string,
+  delivery?: 'meta' | 'header',
 
   // Controls if addon is enabled at all.
   enabled?: boolean,
