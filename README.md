@@ -29,10 +29,22 @@ Configuration
 This addon is configured via `config/content-security-policy.js` file.
 
 ```ts
+type directiveName =
+  // Fetch Directives
+  'child-src' | 'connect-src' | 'default-src' | 'font-src' | 'frame-src' | 'image-src' | 'manifest-src' | 'media-src' | 'object-src' | 'prefetch-src' | 'script-src' | 'script-src-elem' | 'script-src-attr' | 'style-src' | 'style-src-elem' | 'style-src-attr' | 'worker-src' |
+  // Document Directives
+  'base-uri' | 'plugin-types' | 'sandbox' |
+  // Navigation Directives
+  'form-action' | 'form-ancestors' | 'navigate-to' |
+  // Reporting Directives
+  'report-uri' | 'report-uri' | 'report-to' |
+  // Directives Defined in Other Documents
+  'block-all-mixed-content' | 'upgrade-insecure-requests' | 'require-sri-for';
+
 interface EmberCLIContentSecurityPolicyConfig {
   // CSP is delivered via HTTP Header if delivery includes `"header"` and via
   // meta element if it includes `"meta"`.
-  delivery?: 'meta' | 'header',
+  delivery?: string,
 
   // Controls if addon is enabled at all.
   enabled?: boolean,
@@ -46,7 +58,7 @@ interface EmberCLIContentSecurityPolicyConfig {
   // }
   // Please refer to CSP specification for details on valid CSP directives:
   // https://w3c.github.io/webappsec-csp/#framework-directives
-  policy?: { [key: string]: string[]; },
+  policy?: { [key: directiveName]: string[]; },
 
   // Controls if CSP is used in report only mode. For delivery mode `"header"`
   // this causes `Content-Security-Policy-Report-Only` HTTP header to be used.
