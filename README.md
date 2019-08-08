@@ -23,36 +23,73 @@ Installation
 ember install ember-cli-content-security-policy
 ```
 
-## Configuration
+Configuration
+------------------------------------------------------------------------------
 
 This addon is configured via `config/content-security-policy.js` file.
 
-- `delivery: string[]`
-  CSP is delivered via HTTP Header if delivery includes `"header"` and via meta element if it includes `"meta"`.
-  Defaults to `["header"]`.
-- `enabled: boolean`
-  Controls if addon is enabled at all.
-  Defaults to `true`.
-- `policy: object`
-  A hash of options representing a Content Security Policy.
-  Defaults to:
-  ```js
-  {
-    'default-src':  ["'none'"],
-    'script-src':   ["'self'"],
-    'font-src':     ["'self'"],
-    'connect-src':  ["'self'"],
-    'img-src':      ["'self'"],
-    'style-src':    ["'self'"],
-    'media-src':    ["'self'"],
-  }
-  ```
-  To clear a directive from the default policy, set it to `null`.
-  The browser will fallback to the `default-src` if a directive does not exist.
-- `reportOnly: boolean`
-  Controls if CSP is used in report only mode. For delivery mode `"header"` this causes `Content-Security-Policy-Report-Only` HTTP header to be used.
-  Can not be used together with delivery mode `"meta"` as this is not supported by CSP spec.
-  Defaults to `true`.
+```ts
+type directiveName =
+  // Fetch Directives
+  'child-src' | 'connect-src' | 'default-src' | 'font-src' | 'frame-src' | 'image-src' | 'manifest-src' | 'media-src' | 'object-src' | 'prefetch-src' | 'script-src' | 'script-src-elem' | 'script-src-attr' | 'style-src' | 'style-src-elem' | 'style-src-attr' | 'worker-src' |
+  // Document Directives
+  'base-uri' | 'plugin-types' | 'sandbox' |
+  // Navigation Directives
+  'form-action' | 'form-ancestors' | 'navigate-to' |
+  // Reporting Directives
+  'report-uri' | 'report-uri' | 'report-to' |
+  // Directives Defined in Other Documents
+  'block-all-mixed-content' | 'upgrade-insecure-requests' | 'require-sri-for';
+
+interface EmberCLIContentSecurityPolicyConfig {
+  // CSP is delivered via HTTP Header if delivery includes `"header"` and via
+  // meta element if it includes `"meta"`.
+  delivery?: string,
+
+  // Controls if addon is enabled at all.
+  enabled?: boolean,
+
+  // A hash of options representing a Content Security Policy. The key must be
+  // a CSP directive name as defined by spec. The value must be an array of
+  // strings that form a CSP directive value, most likely a source list, e.g.
+  // {
+  //   'default-src': ["'none'"],
+  //   'style-src': ["'self'", 'examples.com']
+  // }
+  // Please refer to CSP specification for details on valid CSP directives:
+  // https://w3c.github.io/webappsec-csp/#framework-directives
+  policy?: { [key: directiveName]: string[]; },
+
+  // Controls if CSP is used in report only mode. For delivery mode `"header"`
+  // this causes `Content-Security-Policy-Report-Only` HTTP header to be used.
+  // Can not be used together with delivery mode `"meta"` as this is not
+  // supported by CSP spec.
+  reportOnly?: boolean,
+}
+```
+
+If you omit some or all of the keys, the default configuration will be used, which is:
+
+```js
+// config/content-security-policy.js
+
+export default function(environment) {
+  return {
+    delivery: ['header'],
+    enabled: true,
+    policy: {
+      'default-src':  ["'none'"],
+      'script-src':   ["'self'"],
+      'font-src':     ["'self'"],
+      'connect-src':  ["'self'"],
+      'img-src':      ["'self'"],
+      'style-src':    ["'self'"],
+      'media-src':    ["'self'"],
+    },
+    reportOnly: true,
+  };
+}
+```
 
 ### Example
 
