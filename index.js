@@ -71,8 +71,8 @@ let appendSourceList = function(policyObject, name, sourceList) {
 };
 
 // appends directives needed for Ember CLI live reload feature to policy object
-let allowLiveReload = function(policyObject) {
-  let { hostname, port, ssl } = this._config.liveReload;
+let allowLiveReload = function(policyObject, liveReloadConfig) {
+  let { hostname, port, ssl } = liveReloadConfig;
 
   ['localhost', '0.0.0.0', hostname].filter(Boolean).forEach(function(hostname) {
     let protocol = ssl ? 'wss://' : 'ws://';
@@ -85,9 +85,17 @@ let allowLiveReload = function(policyObject) {
 module.exports = {
   name: require('./package').name,
 
-  serverMiddleware: function(config) {
-    let app = config.app;
-    let options = config.options;
+  serverMiddleware: function({ app, options }) {
+    // Calculate livereload settings and cache it to be reused in `contentFor` hook.
+    // Can't do that one in another hook cause it depends on middleware options,
+    // which are only available in `serverMiddleware` hook.
+    if (options.liveReload) {
+      this._liveReload = {
+        host: options.liveReloadHost,
+        port: options.liveReloadPort,
+        ssl: options.ssl
+      }
+    }
 
     app.use((req, res, next) => {
       if (!this._config.enabled) {
@@ -105,8 +113,8 @@ module.exports = {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
-      if (this._config.liveReload.enabled) {
-        allowLiveReload(policyObject, options);
+      if (this._liveReload) {
+        allowLiveReload(policyObject, this._liveReload);
       }
 
       // only needed for headers, since report-uri cannot be specified in meta tag
@@ -167,8 +175,8 @@ module.exports = {
         appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
       }
 
-      if (this._config.liveReload.enabled) {
-        allowLiveReload(policyObject);
+      if (this._liveReload) {
+        allowLiveReload(policyObject, this._liveReload);
       }
 
       // clone policy object cause config should not be mutated
@@ -204,22 +212,28 @@ module.exports = {
 
   // Configuration is only available by public API in `app` passed to `included` hook.
   // We calculate configuration in `included` hook and use it in `serverMiddleware`
-  // and `contentFor` hooks, which are executed later. This is necessary cause Ember CLI
-  // does not provide a public API to read build time configuation (`ember-cli-build.js`)
-  // yet. `this._findHost(this).options` seems to be the only reliable way to get it in
-  // these hooks but is private API.
+  // and `contentFor` hooks, which are executed later. This prevents us from needing to
+  // calculate the config more than once. We can't do this in `contentFor` hook cause
+  // that one is executed after `serverMiddleware` and can't do it in `serverMiddleware`
+  // hook cause that one is only executed on `ember serve` but not on `ember build` or
+  // `ember test`. We can't do it in `init` hook cause app is not available by then.
   included: function(app) {
     let environment = app.env;
     let ownConfig = readConfig(app.project, environment);  // config/content-security-policy.js
-    let buildConfig = app.options || {}; // build-time configuration including livereload and ssl options
     let runConfig = app.project.config(); // config/environment.js
     let ui = app.project.ui;
 
-    this._config = calculateConfig(environment, ownConfig, buildConfig, runConfig, ui);
+    this._config = calculateConfig(environment, ownConfig, runConfig, ui);
   },
+
+  // holds configuration for this addon
+  _config: null,
+
+  // holds live reload configuration if express server is used and live reload is enabled
+  _liveReload: null,
 };
 
-function calculateConfig(environment, ownConfig, buildConfig, runConfig, ui) {
+function calculateConfig(environment, ownConfig, runConfig, ui) {
   let config = {
     delivery: [DELIVERY_HEADER],
     enabled: true,
@@ -259,14 +273,6 @@ function calculateConfig(environment, ownConfig, buildConfig, runConfig, ui) {
   }
   if (runConfig.contentSecurityPolicyHeader) {
     config.reportOnly = runConfig.contentSecurityPolicyHeader !== CSP_HEADER;
-  }
-
-  // live reload configuration is required to allow the hosts used by it
-  config.liveReload = {
-    enabled: buildConfig.liveReload,
-    host: buildConfig.liveReloadHost,
-    port: buildConfig.liveReloadPort,
-    ssl: buildConfig.ssl
   }
 
   // apply configuration
