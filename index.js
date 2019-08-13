@@ -1,6 +1,7 @@
 'use strict';
-let chalk = require('chalk');
 
+const chalk = require('chalk');
+const VersionChecker = require('ember-cli-version-checker');
 const {
   buildPolicyString,
   calculateConfig,
@@ -195,6 +196,31 @@ module.exports = {
       } else {
         return '<meta http-equiv="' + CSP_HEADER + '" content="' + policyString + '">';
       }
+    }
+
+    if (type === 'test-body' && this._config.failTests) {
+      let qunitDependency = (new VersionChecker(this)).for('qunit');
+      if (qunitDependency.exists() && qunitDependency.lt('2.9.2')) {
+        this.ui.writeWarnLine(
+          'QUnit < 2.9.2 violates a strict Content Security Policy (CSP) by itself. ' +
+          `You are using QUnit ${qunitDependency.version}. You should upgrade the ` +
+          'dependency to avoid issues.\n' +
+          'Your project might not depend directly on QUnit but on ember-qunit. ' +
+          'In that case you might want to upgrade ember-qunit to > 4.4.1.'
+        );
+      }
+
+      return `
+        <script nonce="${STATIC_TEST_NONCE}">
+          document.addEventListener('securitypolicyviolation', function(event) {
+            throw new Error(
+              'Content-Security-Policy violation detected: ' +
+              'Violated directive: ' + event.violatedDirective + '. ' +
+              'Blocked URI: ' + event.blockedURI
+            );
+          });
+        </script>
+      `;
     }
 
     if (type === 'test-body-footer') {
