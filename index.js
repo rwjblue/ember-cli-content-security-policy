@@ -1,10 +1,12 @@
 'use strict';
 let chalk = require('chalk');
 
-let { buildPolicyString, readConfig } = require('./lib/utils');
+const {
+  buildPolicyString,
+  calculateConfig,
+  readConfig
+} = require('./lib/utils');
 
-const CSP_SELF        = "'self'";
-const CSP_NONE        = "'none'";
 const REPORT_PATH     = '/csp-report';
 
 const CSP_HEADER              = 'Content-Security-Policy';
@@ -20,7 +22,6 @@ const META_UNSUPPORTED_DIRECTIVES = [
   CSP_SANDBOX,
 ];
 
-const DELIVERY_HEADER = 'header';
 const DELIVERY_META = 'meta';
 
 const STATIC_TEST_NONCE = 'abcdefg';
@@ -233,51 +234,3 @@ module.exports = {
   _liveReload: null,
 };
 
-function calculateConfig(environment, ownConfig, runConfig, ui) {
-  let config = {
-    delivery: [DELIVERY_HEADER],
-    enabled: true,
-    policy: {
-      'default-src':  [CSP_NONE],
-      'script-src':   [CSP_SELF],
-      'font-src':     [CSP_SELF],
-      'connect-src':  [CSP_SELF],
-      'img-src':      [CSP_SELF],
-      'style-src':    [CSP_SELF],
-      'media-src':    [CSP_SELF],
-    },
-    reportOnly: true,
-  };
-
-  // testem requires frame-src to run
-  if (environment === 'test') {
-    config.policy['frame-src'] = CSP_SELF;
-  }
-
-  ui.writeWarnLine(
-    'Configuring ember-cli-content-security-policy using `contentSecurityPolicy`, ' +
-    '`contentSecurityPolicyHeader` and `contentSecurityPolicyMeta` keys in `config/environment.js` ' +
-    'is deprecate and will be removed in v2.0.0. ember-cli-content-security-policy is now configured ' +
-    'using `ember-cli-build.js`. Please find detailed information about new configuration options ' +
-    'in addon documentation at https://github.com/rwjblue/ember-cli-content-security-policy/blob/master/DEPRECATIONS.md.',
-    !runConfig.contentSecurityPolicy || !runConfig.contentSecurityPolicyHeader || !runConfig.contentSecurityPolicyMeta
-  );
-
-  // support legacy configuration options
-  if (runConfig.contentSecurityPolicy) {
-    // policy object is merged not replaced
-    Object.assign(config.policy, runConfig.contentSecurityPolicy);
-  }
-  if (runConfig.contentSecurityPolicyMeta) {
-    config.delivery = [DELIVERY_META];
-  }
-  if (runConfig.contentSecurityPolicyHeader) {
-    config.reportOnly = runConfig.contentSecurityPolicyHeader !== CSP_HEADER;
-  }
-
-  // apply configuration
-  Object.assign(config, ownConfig);
-
-  return config;
-}
-module.exports._calculateConfig = calculateConfig;

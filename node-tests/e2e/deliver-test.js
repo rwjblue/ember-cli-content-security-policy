@@ -2,30 +2,12 @@ const expect = require('chai').expect;
 const denodeify = require('denodeify');
 const request = denodeify(require('request'));
 const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
-const fs = require('fs-extra');
+const {
+  removeConfig,
+  setConfig
+} = require('../utils');
 
 const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content="(.*)">/i;
-
-function getConfigPath(app) {
-  return app.filePath('config/content-security-policy.js');
-}
-
-async function setConfig(app, config) {
-  let file = getConfigPath(app);
-  let content = `module.exports = function() { return ${JSON.stringify(config)}; }`;
-
-  await fs.writeFile(file, content);
-}
-
-async function removeConfig(app) {
-  let file = getConfigPath(app);
-
-  if (!fs.existsSync(file)) {
-    return;
-  }
-
-  await fs.remove(file);
-}
 
 describe('e2e: delivers CSP as configured', function() {
   this.timeout(300000);
