@@ -124,15 +124,17 @@ describe('e2e: delivers CSP as configured', function() {
   });
 
   describe('supports live reload', function() {
+    beforeEach(async function() {
+      await setConfig(app, {
+        delivery: ['header', 'meta'],
+      });
+    });
+
     afterEach(async function() {
       await app.stopServer();
     });
 
     it('adds CSP directives required by live reload', async function() {
-      await setConfig(app, {
-        delivery: ['header', 'meta'],
-      });
-
       await app.startServer();
 
       let response = await request({
@@ -149,6 +151,33 @@ describe('e2e: delivers CSP as configured', function() {
         expect(csp).to.match(/connect-src [^;]* ws:\/\/localhost:49741/);
         expect(csp).to.match(/script-src [^;]* 0.0.0.0:49741/);
         expect(csp).to.match(/script-src [^;]* localhost:49741/);
+      });
+    });
+
+    it('takes live reload configuration into account', async function() {
+      await app.startServer({
+        additionalArguments: [
+          '--live-reload-host',
+          'examples.com',
+          '--live-reload-port',
+          '49494',
+          '--port',
+          '49494'
+        ],
+      });
+
+      let response = await request({
+        url: 'http://localhost:49494',
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
+
+      let cspInHeader = response.headers['content-security-policy-report-only'];
+      let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
+      [cspInHeader, cspInMetaElement].forEach((csp) => {
+        expect(csp).to.match(/connect-src [^;]* ws:\/\/examples.com:49494/);
+        expect(csp).to.match(/script-src [^;]* examples.com:49494/);
       });
     });
   });

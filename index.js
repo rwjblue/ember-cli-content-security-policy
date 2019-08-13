@@ -93,7 +93,7 @@ module.exports = {
     // which are only available in `serverMiddleware` hook.
     if (options.liveReload) {
       this._liveReload = {
-        host: options.liveReloadHost,
+        hostname: options.liveReloadHost,
         port: options.liveReloadPort,
         ssl: options.ssl
       }
