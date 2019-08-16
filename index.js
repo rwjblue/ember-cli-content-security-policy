@@ -3,6 +3,7 @@
 const chalk = require('chalk');
 const VersionChecker = require('ember-cli-version-checker');
 const {
+  appendSourceList,
   buildPolicyString,
   calculateConfig,
   readConfig
@@ -31,45 +32,6 @@ let unsupportedDirectives = function(policyObject) {
   return META_UNSUPPORTED_DIRECTIVES.filter(function(name) {
     return policyObject && (name in policyObject);
   });
-};
-
-// CSP has a built-in fallback mechanism. If, say, `connect-src` is not defined it
-// will fall back to `default-src`. This can cause issues. An example:
-//
-// Developer has has defined the following policy:
-// `default-src: 'self' example.com;`
-// and an addon appends the connect-src entry live-reload.local the result is:
-// `default-src: 'self' example.com; connect-src: live-reload.local;`
-//
-// After the addons change an xhr to example.com (which was previously permitted, via fallback)
-// will now be rejected since it doesn't match live-reload.local.
-//
-// To mitigate, whenever we append to a non-existing directive we must also copy all sources from
-// default-src onto the specified directive.
-let appendSourceList = function(policyObject, name, sourceList) {
-  let oldSourceList;
-  let oldValue = policyObject[name];
-
-  // cast string syntax into array
-  if (oldValue && typeof oldValue === 'string') {
-    oldValue = oldValue.split(' ');
-  }
-
-  if (oldValue !== null && typeof oldValue !== 'undefined' && !Array.isArray(oldValue)) {
-    throw new Error('Unknown source list value');
-  }
-
-  if (!oldValue || oldValue.length === 0) {
-    // copy default-src (see above)
-    oldSourceList = policyObject['default-src'] || [];
-  } else { // array
-    oldSourceList = oldValue;
-  }
-
-  // do not mutate existing source list to prevent leaking state between different hooks
-  let newSourceList = oldSourceList.slice();
-  newSourceList.push(sourceList);
-  policyObject[name] = newSourceList.join(' ');
 };
 
 // appends directives needed for Ember CLI live reload feature to policy object
