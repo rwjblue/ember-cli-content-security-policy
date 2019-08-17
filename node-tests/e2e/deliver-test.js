@@ -103,6 +103,31 @@ describe('e2e: delivers CSP as configured', function() {
       await app.stopServer();
     });
 
+    it('does not deliver CSP through HTTP header if delivery does not include "header"', async function() {
+      await setConfig(app, {
+        delivery: ['meta'],
+      });
+
+      await app.startServer();
+
+      let response = await request({
+        url: 'http://localhost:49741',
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
+
+      expect(response.headers).to.not.have.key('content-security-policy-report-only');
+      expect(response.headers).to.not.have.key('content-security-policy');
+      expect(response.body).to.match(CSP_META_TAG_REG_EXP);
+    });
+  });
+
+  describe('', function() {
+    afterEach(async function() {
+      await app.stopServer();
+    });
+
     it('does not deliver CSP if `enabled` option is `false`', async function() {
       await setConfig(app, {
         enabled: false,
