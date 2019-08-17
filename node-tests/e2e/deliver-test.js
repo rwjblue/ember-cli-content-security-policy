@@ -20,15 +20,8 @@ describe('e2e: delivers CSP as configured', function() {
     await app.create('default', { noFixtures: true });
   });
 
-  afterEach(async function() {
-    await removeConfig(app);
-  });
-
-  // Server isn't shutdown successfully if `app.startServer()` and `app.stopServer()`
-  // are not wrapped inside a describe block. Therefore all tests after the first one
-  // fail with a "Port 49741 is already in use" error.
-  describe('', function() {
-    beforeEach(async function() {
+  describe('delivery through meta element', function() {
+    before(async function() {
       await setConfig(app, {
         delivery: ['header', 'meta'],
         policy: {
@@ -37,15 +30,12 @@ describe('e2e: delivers CSP as configured', function() {
         reportOnly: false,
       });
 
-      await app.startServer({
-        // nonce is always added to CSP in HTTP Header but only
-        // to CSP in meta element for testing environment
-        additionalArguments: ['--environment', 'test']
-      });
+      await app.startServer();
     });
 
-    afterEach(async function() {
+    after(async function() {
       await app.stopServer();
+      await removeConfig(app);
     });
 
     it('creates a CSP meta tag if `delivery` option includes `"meta"`', async function() {
@@ -73,19 +63,22 @@ describe('e2e: delivers CSP as configured', function() {
     });
   });
 
-  describe('', function() {
-    afterEach(async function() {
-      await app.stopServer();
-    });
-
-    it('uses Content-Security-Policy-Report-Only header if `reportOnly` option is `true`', async function() {
+  describe('report only', function() {
+    before(async function() {
       await setConfig(app, {
         delivery: ['header'],
         reportOnly: true,
       });
 
       await app.startServer();
+    });
 
+    after(async function() {
+      await app.stopServer();
+      await removeConfig(app);
+    });
+
+    it('uses Content-Security-Policy-Report-Only header if `reportOnly` option is `true`', async function() {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
@@ -98,18 +91,21 @@ describe('e2e: delivers CSP as configured', function() {
     });
   });
 
-  describe('', function() {
-    afterEach(async function() {
-      await app.stopServer();
-    });
-
-    it('does not deliver CSP through HTTP header if delivery does not include "header"', async function() {
+  describe('delivery through meta only', function() {
+    before(async function() {
       await setConfig(app, {
         delivery: ['meta'],
       });
 
       await app.startServer();
+    });
 
+    after(async function() {
+      await app.stopServer();
+      await removeConfig(app);
+    });
+
+    it('does not deliver CSP through HTTP header if delivery does not include "header"', async function() {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
@@ -123,18 +119,21 @@ describe('e2e: delivers CSP as configured', function() {
     });
   });
 
-  describe('', function() {
-    afterEach(async function() {
-      await app.stopServer();
-    });
-
-    it('does not deliver CSP if `enabled` option is `false`', async function() {
+  describe('disabled', function() {
+    before(async function() {
       await setConfig(app, {
         enabled: false,
       });
 
       await app.startServer();
+    });
 
+    after(async function() {
+      await app.stopServer();
+      await removeConfig(app);
+    });
+
+    it('does not deliver CSP if `enabled` option is `false`', async function() {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
@@ -149,10 +148,14 @@ describe('e2e: delivers CSP as configured', function() {
   });
 
   describe('supports live reload', function() {
-    beforeEach(async function() {
+    before(async function() {
       await setConfig(app, {
         delivery: ['header', 'meta'],
       });
+    });
+
+    after(async function() {
+      await removeConfig(app);
     });
 
     afterEach(async function() {
