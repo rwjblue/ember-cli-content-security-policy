@@ -62,11 +62,6 @@ module.exports = {
     // `http://localhost:4200/tests` and reporting CSP violations on CLI.
     let policyObject = this._config.policy;
 
-    // the local server will never run for production builds, so no danger in
-    // adding the nonce all the time even so it's only needed if tests are
-    // executed by opening `http://localhost:4200/tests`
-    appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
-
     // live reload requires some addition CSP directives
     if (options.liveReload) {
       allowLiveReload(policyObject, {
@@ -195,8 +190,8 @@ module.exports = {
     let ui = app.project.ui;
     let config = calculateConfig(environment, ownConfig, runConfig, ui);
 
-    // add static test nonce in test environment
-    if (environment === 'test') {
+    // add static test nonce if build includes tests
+    if (app.tests) {
       appendSourceList(config.policy, 'script-src', `'nonce-${STATIC_TEST_NONCE}'`);
     }
 
