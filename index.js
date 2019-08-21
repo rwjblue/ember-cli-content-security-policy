@@ -184,6 +184,8 @@ module.exports = {
   // hook to support live reload. This is safe because `serverMiddleware` hook is executed
   // before `contentFor` hook.
   included: function(app) {
+    this._super.included.apply(this, arguments);
+
     let environment = app.env;
     let ownConfig = readConfig(app.project, environment);  // config/content-security-policy.js
     let runConfig = app.project.config(); // config/environment.js
