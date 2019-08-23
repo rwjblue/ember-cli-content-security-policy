@@ -3,6 +3,7 @@
 const chalk = require('chalk');
 const VersionChecker = require('ember-cli-version-checker');
 const {
+  appendSourceList,
   buildPolicyString,
   calculateConfig,
   readConfig
@@ -33,45 +34,6 @@ let unsupportedDirectives = function(policyObject) {
   });
 };
 
-// CSP has a built-in fallback mechanism. If, say, `connect-src` is not defined it
-// will fall back to `default-src`. This can cause issues. An example:
-//
-// Developer has has defined the following policy:
-// `default-src: 'self' example.com;`
-// and an addon appends the connect-src entry live-reload.local the result is:
-// `default-src: 'self' example.com; connect-src: live-reload.local;`
-//
-// After the addons change an xhr to example.com (which was previously permitted, via fallback)
-// will now be rejected since it doesn't match live-reload.local.
-//
-// To mitigate, whenever we append to a non-existing directive we must also copy all sources from
-// default-src onto the specified directive.
-let appendSourceList = function(policyObject, name, sourceList) {
-  let oldSourceList;
-  let oldValue = policyObject[name];
-
-  // cast string syntax into array
-  if (oldValue && typeof oldValue === 'string') {
-    oldValue = oldValue.split(' ');
-  }
-
-  if (oldValue !== null && typeof oldValue !== 'undefined' && !Array.isArray(oldValue)) {
-    throw new Error('Unknown source list value');
-  }
-
-  if (!oldValue || oldValue.length === 0) {
-    // copy default-src (see above)
-    oldSourceList = policyObject['default-src'] || [];
-  } else { // array
-    oldSourceList = oldValue;
-  }
-
-  // do not mutate existing source list to prevent leaking state between different hooks
-  let newSourceList = oldSourceList.slice();
-  newSourceList.push(sourceList);
-  policyObject[name] = newSourceList.join(' ');
-};
-
 // appends directives needed for Ember CLI live reload feature to policy object
 let allowLiveReload = function(policyObject, liveReloadConfig) {
   let { hostname, port, ssl } = liveReloadConfig;
@@ -88,66 +50,56 @@ module.exports = {
   name: require('./package').name,
 
   serverMiddleware: function({ app, options }) {
-    // Calculate livereload settings and cache it to be reused in `contentFor` hook.
-    // Can't do that one in another hook cause it depends on middleware options,
-    // which are only available in `serverMiddleware` hook.
+    // Configuration is not changeable at run-time. Therefore it's safe to not
+    // register the express middleware at all if addon is disabled and
+    // precalculate dynamic values.
+    if (!this._config.enabled) {
+      return;
+    }
+
+    // Need to recalculate the policy if local development server is used to
+    // support live reload, executing tests in development enviroment via
+    // `http://localhost:4200/tests` and reporting CSP violations on CLI.
+    let policyObject = this._config.policy;
+
+    // live reload requires some addition CSP directives
     if (options.liveReload) {
-      this._liveReload = {
+      allowLiveReload(policyObject, {
         hostname: options.liveReloadHost,
         port: options.liveReloadPort,
         ssl: options.ssl
-      }
+      });
     }
 
+    // add report URI to policy object and allow it as connection source
+    if (this._config.reportOnly && !('report-uri' in policyObject)) {
+      let ecHost = options.host || 'localhost';
+      let ecProtocol = options.ssl ? 'https://' : 'http://';
+      let ecOrigin = ecProtocol + ecHost + ':' + options.port;
+      appendSourceList(policyObject, 'connect-src', ecOrigin);
+      policyObject['report-uri'] = ecOrigin + REPORT_PATH;
+    }
+
+    this._policyString = buildPolicyString(policyObject);
+
     app.use((req, res, next) => {
-      if (!this._config.enabled) {
-        next();
-        return;
-      }
-
       let header = this._config.reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
-      // clone policy object cause config should not be mutated
-      let policyObject = Object.assign({}, this._config.policy);
-
-      // the local server will never run for production builds, so no danger in adding the nonce all the time
-      // even so it's only needed if tests are executed by opening `http://localhost:4200/tests`
-      if (policyObject) {
-        appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
-      }
-
-      if (this._liveReload) {
-        allowLiveReload(policyObject, this._liveReload);
-      }
-
-      // only needed for headers, since report-uri cannot be specified in meta tag
-      if (header.indexOf('Report-Only') !== -1 && !('report-uri' in policyObject)) {
-        let ecHost = options.host || 'localhost';
-        let ecProtocol = options.ssl ? 'https://' : 'http://';
-        let ecOrigin = ecProtocol + ecHost + ':' + options.port;
-        appendSourceList(policyObject, 'connect-src', ecOrigin);
-        policyObject['report-uri'] = ecOrigin + REPORT_PATH;
-      }
-
-      let headerValue = buildPolicyString(policyObject);
-
-      if (!headerValue) {
-        next();
-        return;
-      }
+      let policyString = this._policyString;
 
       // clear existing headers before setting ours
       res.removeHeader(CSP_HEADER);
       res.removeHeader(CSP_HEADER_REPORT_ONLY);
-      res.setHeader(header, headerValue);
+      res.setHeader(header, policyString);
 
       // for Internet Explorer 11 and below (Edge support the standard header name)
       res.removeHeader('X-' + CSP_HEADER);
       res.removeHeader('X-' + CSP_HEADER_REPORT_ONLY);
-      res.setHeader('X-' + header, headerValue);
+      res.setHeader('X-' + header, policyString);
 
       next();
     });
 
+    // register handler for CSP reports
     let bodyParser = require('body-parser');
     app.use(REPORT_PATH, bodyParser.json({ type: 'application/csp-report' }));
     app.use(REPORT_PATH, bodyParser.json({ type: 'application/json' }));
@@ -171,31 +123,13 @@ module.exports = {
         this._config.reportOnly
       );
 
-      let policyObject = Object.assign({}, this._config.policy);
-
-      if (policyObject && appConfig.environment === 'test') {
-        appendSourceList(policyObject, 'script-src', "'nonce-" + STATIC_TEST_NONCE + "'");
-      }
-
-      if (this._liveReload) {
-        allowLiveReload(policyObject, this._liveReload);
-      }
-
-      // clone policy object cause config should not be mutated
-      let policyString = buildPolicyString(policyObject);
-
-      unsupportedDirectives(policyObject).forEach(function(name) {
+      unsupportedDirectives(this._config.policy).forEach(function(name) {
         let msg = 'CSP delivered via meta does not support `' + name + '`, ' +
                   'per the W3C recommendation.';
         console.log(chalk.yellow(msg)); // eslint-disable-line no-console
       });
 
-      if (!policyString) {
-        // eslint-disable-next-line no-console
-        console.log(chalk.yellow('CSP via meta tag enabled but no policy exist.'));
-      } else {
-        return '<meta http-equiv="' + CSP_HEADER + '" content="' + policyString + '">';
-      }
+      return `<meta http-equiv="${CSP_HEADER}" content="${this._policyString}">`;
     }
 
     if (type === 'test-body' && this._config.failTests) {
@@ -244,19 +178,33 @@ module.exports = {
   // that one is executed after `serverMiddleware` and can't do it in `serverMiddleware`
   // hook cause that one is only executed on `ember serve` but not on `ember build` or
   // `ember test`. We can't do it in `init` hook cause app is not available by then.
+  //
+  // The same applies to policy string generation. It's also calculated in `included`
+  // hook and reused in both others. But this one might be overriden in `serverMiddleware`
+  // hook to support live reload. This is safe because `serverMiddleware` hook is executed
+  // before `contentFor` hook.
   included: function(app) {
+    this._super.included.apply(this, arguments);
+
     let environment = app.env;
     let ownConfig = readConfig(app.project, environment);  // config/content-security-policy.js
     let runConfig = app.project.config(); // config/environment.js
     let ui = app.project.ui;
+    let config = calculateConfig(environment, ownConfig, runConfig, ui);
 
-    this._config = calculateConfig(environment, ownConfig, runConfig, ui);
+    // add static test nonce if build includes tests
+    if (app.tests) {
+      appendSourceList(config.policy, 'script-src', `'nonce-${STATIC_TEST_NONCE}'`);
+    }
+
+    this._config = config;
+    this._policyString = buildPolicyString(config.policy);
   },
 
   // holds configuration for this addon
   _config: null,
 
-  // holds live reload configuration if express server is used and live reload is enabled
-  _liveReload: null,
+  // holds calculated policy string
+  _policyString: null,
 };
 
