@@ -49,6 +49,55 @@ let allowLiveReload = function(policyObject, liveReloadConfig) {
 module.exports = {
   name: require('./package').name,
 
+  // Configuration is only available by public API in `app` passed to some hook.
+  // We calculate configuration in `config` hook and use it in `serverMiddleware`
+  // and `contentFor` hooks, which are executed later. This prevents us from needing to
+  // calculate the config more than once. We can't do this in `contentFor` hook cause
+  // that one is executed after `serverMiddleware` and can't do it in `serverMiddleware`
+  // hook cause that one is only executed on `ember serve` but not on `ember build` or
+  // `ember test`. We can't do it in `init` hook cause app is not available by then.
+  //
+  // The same applies to policy string generation. It's also calculated in `config`
+  // hook and reused in both others. But this one might be overriden in `serverMiddleware`
+  // hook to support live reload. This is safe because `serverMiddleware` hook is executed
+  // before `contentFor` hook.
+  //
+  // Only a small subset of the configuration is required at run time in order to support
+  // FastBoot. This one is returned here as default configuration in order to make it
+  // available at run time.
+  config: function(environment, runConfig) {
+    // calculate configuration and policy string
+    // hook may be called more than once, but we only need to calculate once
+    if (!this._config) {
+      let { app, project } = this;
+      let ownConfig = readConfig(project, environment);
+      let ui = project.ui;
+      let config = calculateConfig(environment, ownConfig, runConfig, ui);
+
+      // add static test nonce if build includes tests
+      // Note: app is not defined for CLI commands
+      if (app && app.tests) {
+        appendSourceList(config.policy, 'script-src', `'nonce-${STATIC_TEST_NONCE}'`);
+      }
+
+      this._config = config;
+      this._policyString = buildPolicyString(config.policy);
+    }
+
+    // provide configuration needed at run-time for FastBoot support (if needed)
+    // TODO: only inject if application uses FastBoot
+    if (!this._config.enabled || !this._config.delivery.includes('header')) {
+      return {};
+    }
+
+    return {
+      'ember-cli-content-security-policy': {
+        policy: this._policyString,
+        reportOnly: this._config.reportOnly,
+      },
+    };
+  },
+
   serverMiddleware: function({ app, options }) {
     // Configuration is not changeable at run-time. Therefore it's safe to not
     // register the express middleware at all if addon is disabled and
@@ -115,6 +164,7 @@ module.exports = {
       return;
     }
 
+    // inject CSP meta tag
     if (type === 'head' && this._config.delivery.indexOf(DELIVERY_META) !== -1) {
       this.ui.writeWarnLine(
         'Content Security Policy does not support report only mode if delivered via meta element. ' +
@@ -132,6 +182,7 @@ module.exports = {
       return `<meta http-equiv="${CSP_HEADER}" content="${this._policyString}">`;
     }
 
+    // inject event listener needed for test support
     if (type === 'test-body' && this._config.failTests) {
       let qunitDependency = (new VersionChecker(this)).for('qunit');
       if (qunitDependency.exists() && qunitDependency.lt('2.9.2')) {
@@ -157,8 +208,8 @@ module.exports = {
       `;
     }
 
+    // Add nonce to <script> tag inserted by Ember CLI to assert that test file was loaded.
     if (type === 'test-body-footer') {
-      // Add nonce to <script> tag inserted by ember-cli to assert that test file was loaded.
       existingContent.forEach((entry, index) => {
         if (/<script>\s*Ember.assert\(.*EmberENV.TESTS_FILE_LOADED\);\s*<\/script>/.test(entry)) {
           existingContent[index] = entry.replace('<script>', '<script nonce="' + STATIC_TEST_NONCE + '">');
@@ -169,36 +220,6 @@ module.exports = {
 
   includedCommands: function() {
     return require('./lib/commands');
-  },
-
-  // Configuration is only available by public API in `app` passed to `included` hook.
-  // We calculate configuration in `included` hook and use it in `serverMiddleware`
-  // and `contentFor` hooks, which are executed later. This prevents us from needing to
-  // calculate the config more than once. We can't do this in `contentFor` hook cause
-  // that one is executed after `serverMiddleware` and can't do it in `serverMiddleware`
-  // hook cause that one is only executed on `ember serve` but not on `ember build` or
-  // `ember test`. We can't do it in `init` hook cause app is not available by then.
-  //
-  // The same applies to policy string generation. It's also calculated in `included`
-  // hook and reused in both others. But this one might be overriden in `serverMiddleware`
-  // hook to support live reload. This is safe because `serverMiddleware` hook is executed
-  // before `contentFor` hook.
-  included: function(app) {
-    this._super.included.apply(this, arguments);
-
-    let environment = app.env;
-    let ownConfig = readConfig(app.project, environment);  // config/content-security-policy.js
-    let runConfig = app.project.config(); // config/environment.js
-    let ui = app.project.ui;
-    let config = calculateConfig(environment, ownConfig, runConfig, ui);
-
-    // add static test nonce if build includes tests
-    if (app.tests) {
-      appendSourceList(config.policy, 'script-src', `'nonce-${STATIC_TEST_NONCE}'`);
-    }
-
-    this._config = config;
-    this._policyString = buildPolicyString(config.policy);
   },
 
   // holds configuration for this addon
