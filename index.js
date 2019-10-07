@@ -84,6 +84,7 @@ module.exports = {
 
     // provide configuration needed at run-time for FastBoot support (if needed)
     // TODO: only inject if application uses FastBoot
+    //       https://github.com/rwjblue/ember-cli-content-security-policy/issues/116
     if (!this._config.enabled || !this._config.delivery.includes('header')) {
       return {};
     }
