@@ -26,12 +26,9 @@ branches:
 
 jobs:
   fail_fast: true
-  allow_failures:
-    - env: EMBER_TRY_SCENARIO=ember-canary
 
   include:
     # runs linting and tests with current locked deps
-
     - stage: "Tests"
       name: "Tests"
       script:
@@ -40,15 +37,15 @@ jobs:
         - yarn test
         - yarn test:node
 
-    # we recommend new addons test the current and previous LTS
-    # as well as latest stable release (bonus points to beta/canary)
+    # run additional tests against LTS versions of Ember CLI,
+    # latest stable release and current beta
     - stage: "Additional Tests"
-      env: EMBER_TRY_SCENARIO=ember-lts-2.18
-    - env: EMBER_TRY_SCENARIO=ember-lts-3.4
-    - env: EMBER_TRY_SCENARIO=ember-release
-    - env: EMBER_TRY_SCENARIO=ember-beta
-    - env: EMBER_TRY_SCENARIO=ember-canary
-    - env: EMBER_TRY_SCENARIO=ember-default-with-jquery
+      env: EMBER_CLI_VERSION=~3.4.0
+    - env: EMBER_CLI_VERSION=~3.8.0
+    - env: EMBER_CLI_VERSION=~3.12.0
+    - env: EMBER_CLI_VERSION=latest
+    - env: EMBER_CLI_VERSION=beta
 
 script:
-  - node_modules/.bin/ember try:one $EMBER_TRY_SCENARIO
+  - yarn add -D ember-cli@${EMBER_CLI_VERSION}
+  - yarn test:node
