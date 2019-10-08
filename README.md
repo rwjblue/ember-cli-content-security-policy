@@ -128,6 +128,14 @@ module.exports = function(environment) {
 };
 ```
 
+## FastBoot Integration
+
+This addon sets CSP headers in FastBoot if enabled for FastBoot environment and `delivery`
+contains `"header"`. If using `reportOnly` mode you must provide a valid `reportUri` directive
+pointing to an endpoint that accepts violation reports. As `reportUri` directive is deprecated
+you should additionally provide a `reportTo` directive, even so it'ss only supported by Google
+Chrome so far.
+
 ## External Configuration
 
 In order to configure your production server, you can use the `csp-headers` command to obtain
@@ -155,7 +163,7 @@ default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style
 
 ## Resources
 
-* http://www.w3.org/TR/CSP/
+* https://w3c.github.io/webappsec-csp/
 * http://content-security-policy.com/
 * https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Using_Content_Security_Policy
 * http://caniuse.com/contentsecuritypolicy
