@@ -8,6 +8,11 @@ const {
   setConfig
 } = require('../utils');
 
+function getRunTimeConfig(html) {
+  let encodedConfig = html.match(/<meta name="default\/config\/environment" content="(.*)" \/>/)[1];
+  return JSON.parse(decodeURIComponent(encodedConfig));
+}
+
 describe('e2e: fastboot integration', function() {
   this.timeout(300000);
 
@@ -29,6 +34,18 @@ describe('e2e: fastboot integration', function() {
         },
       }).catch(reject);
     });
+  }
+
+  async function stopServer() {
+    // stop fastboot app server
+    if (process.platform === 'win32') {
+      serverProcess.send({ kill: true });
+    } else {
+      serverProcess.kill('SIGINT');
+    }
+
+    // wait until sever terminated
+    await serverPromise;
   }
 
   before(async function() {
@@ -62,61 +79,126 @@ describe('e2e: fastboot integration', function() {
     );
   });
 
-  afterEach(async function() {
-    // stop fastboot app server
-    if (process.platform === 'win32') {
-      serverProcess.send({ kill: true });
-    } else {
-      serverProcess.kill('SIGINT');
-    }
-
-    // wait until sever terminated
-    await serverPromise;
-
-    await removeConfig(app);
-  });
-
-  it('sets CSP header if served via FastBoot', async function() {
-    await app.runEmberCommand('build');
-    await startServer();
-
-    let response = await request({
-      url: 'http://localhost:49742',
-      headers: {
-        'Accept': 'text/html'
-      },
+  describe('scenario: default', function() {
+    before(async function() {
+      await app.runEmberCommand('build');
+      await startServer();
     });
 
-    expect(response.headers).to.include.key('content-security-policy-report-only');
-  });
-
-  it('does not set CSP header if disabled', async function() {
-    await setConfig(app, { enabled: false });
-    await app.runEmberCommand('build');
-    await startServer();
-
-    let response = await request({
-      url: 'http://localhost:49742',
-      headers: {
-        'Accept': 'text/html'
-      },
+    after(async function() {
+      await stopServer();
+      await removeConfig(app);
     });
 
-    expect(response.headers).to.not.include.key('content-security-policy-report-only');
+    it('sets CSP header if served via FastBoot', async function() {
+      let response = await request({
+        url: 'http://localhost:49742',
+        headers: {
+          'Accept': 'text/html'
+        },
+      });
+
+      expect(response.headers).to.include.key('content-security-policy-report-only');
+    });
   });
 
-  it('does not set CSP header if delivery does not include header', async function() {
-    await setConfig(app, { delivery: ['meta'] });
-    await app.runEmberCommand('build');
-    await startServer();
-
-    let response = await request({
-      url: 'http://localhost:49742',
-      headers: {
-        'Accept': 'text/html'
-      },
+  describe('scenario: disabled', function() {
+    before(async function() {
+      await setConfig(app, { enabled: false });
+      await app.runEmberCommand('build');
+      await startServer();
     });
 
-    expect(response.headers).to.not.include.key('content-security-policy-report-only');
+    after(async function() {
+      await stopServer();
+      await removeConfig(app);
+    });
+
+    it('does not set CSP header if disabled', async function() {
+      let response = await request({
+        url: 'http://localhost:49742',
+        headers: {
+          'Accept': 'text/html'
+        },
+      });
+
+      expect(response.statusCode).to.equal(200);
+      expect(response.headers).to.not.include.key('content-security-policy-report-only');
+    });
+
+    it('does not push run-time configuration into app if disabled', async function() {
+      let response = await request({
+        url: 'http://localhost:49742',
+        headers: {
+          'Accept': 'text/html'
+        },
+      });
+
+      let runTimeConfig = getRunTimeConfig(response.body);
+      expect(response.statusCode).to.equal(200);
+      expect(runTimeConfig).to.not.include.key('ember-cli-content-security-policy');
+    });
+
+    it('does not push instance initializer into app if disabled', async function() {
+      let response = await request({
+        url: 'http://localhost:49742/assets/vendor.js',
+        headers: {
+          'Accept': 'application/javascript'
+        },
+      });
+
+      expect(response.statusCode).to.equal(200);
+      expect(response.body).to.not.include('instance-initializers/content-security-policy');
+    });
+  });
+
+  describe('scenario: delivery does not include header', function() {
+    before(async function() {
+      await setConfig(app, { delivery: ['meta'] });
+      await app.runEmberCommand('build');
+      await startServer();
+    });
+
+    after(async function() {
+      await stopServer();
+      await removeConfig(app);
+    });
+
+    it('does not set CSP header if delivery does not include header', async function() {
+      let response = await request({
+        url: 'http://localhost:49742',
+        headers: {
+          'Accept': 'text/html'
+        },
+      });
+
+      expect(response.statusCode).to.equal(200);
+      expect(response.headers).to.not.include.key('content-security-policy-report-only');
+    });
+
+    it('does not push run-time configuration into app if delivery does not include header', async function() {
+      let response = await request({
+        url: 'http://localhost:49742',
+        headers: {
+          'Accept': 'text/html'
+        },
+      });
+
+      let runTimeConfig = getRunTimeConfig(response.body);
+      expect(response.statusCode).to.equal(200);
+      expect(runTimeConfig).to.not.include.key('ember-cli-content-security-policy');
+    });
+
+    it('does not push instance initializer into app if disabled', async function() {
+      let response = await request({
+        url: 'http://localhost:49742/assets/vendor.js',
+        headers: {
+          'Accept': 'application/javascript'
+        },
+      });
+
+      expect(response.statusCode).to.equal(200);
+      expect(response.body).to.not.include('instance-initializers/content-security-policy');
+    });
   });
 });

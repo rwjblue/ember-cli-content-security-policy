@@ -20,7 +20,7 @@ describe('e2e: delivers CSP as configured', function() {
     await app.create('default', { noFixtures: true });
   });
 
-  describe('delivery through meta element', function() {
+  describe('scenario: delivery through meta element', function() {
     before(async function() {
       await setConfig(app, {
         delivery: ['header', 'meta'],
@@ -63,7 +63,7 @@ describe('e2e: delivers CSP as configured', function() {
     });
   });
 
-  describe('report only', function() {
+  describe('scenario: report only', function() {
     before(async function() {
       await setConfig(app, {
         delivery: ['header'],
@@ -91,7 +91,7 @@ describe('e2e: delivers CSP as configured', function() {
     });
   });
 
-  describe('delivery through meta only', function() {
+  describe('scenario: delivery through meta only', function() {
     before(async function() {
       await setConfig(app, {
         delivery: ['meta'],
@@ -119,7 +119,7 @@ describe('e2e: delivers CSP as configured', function() {
     });
   });
 
-  describe('disabled', function() {
+  describe('scenario: disabled', function() {
     before(async function() {
       await setConfig(app, {
         enabled: false,
@@ -147,7 +147,7 @@ describe('e2e: delivers CSP as configured', function() {
     });
   });
 
-  describe('supports live reload', function() {
+  describe('feature: live reload support', function() {
     before(async function() {
       await setConfig(app, {
         delivery: ['header', 'meta'],

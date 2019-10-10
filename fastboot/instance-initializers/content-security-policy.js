@@ -9,7 +9,7 @@ function readAddonConfig(appInstance) {
   //       if already available through CSP meta element
   assert(
     'Required configuration is available at run-time',
-    addonConfig.hasOwnProperty('reportOnly') && addonConfig.hasOwnProperty('policy')
+    addonConfig && addonConfig.hasOwnProperty('reportOnly') && addonConfig.hasOwnProperty('policy')
   );
 
   return config['ember-cli-content-security-policy'];
