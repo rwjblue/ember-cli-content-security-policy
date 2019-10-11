@@ -82,13 +82,24 @@ module.exports = {
       this._policyString = buildPolicyString(config.policy);
     }
 
-    // provide configuration needed at run-time for FastBoot support (if needed)
-    // TODO: only inject if application uses FastBoot
-    //       https://github.com/rwjblue/ember-cli-content-security-policy/issues/116
-    if (!this._config.enabled || !this._config.delivery.includes('header')) {
+    // CSP header should only be set in FastBoot if
+    // - addon is enabled and
+    // - configured to deliver CSP via header and
+    // - application has ember-cli-fastboot dependency.
+    this._needsFastBootSupport = this._config.enabled &&
+      this._config.delivery.includes('header') &&
+      // TODO: check if application has ember-cli-fastboot-dependency
+      // https://github.com/rwjblue/ember-cli-content-security-policy/issues/116
+      true;
+
+    // Run-time configuration is only needed for FastBoot support.
+    if (!this._needsFastBootSupport) {
       return {};
     }
 
+    // In order to set the correct CSP headers in FastBoot only a limited part of
+    // configuration is required: The policy string, which is used as header value,
+    // and the report only flag, which is determines the header name.
     return {
       'ember-cli-content-security-policy': {
         policy: this._policyString,
@@ -221,8 +232,22 @@ module.exports = {
     return require('./lib/commands');
   },
 
+  treeForFastBoot: function(tree) {
+    // Instance initializer should only be included in build if required.
+    // It's only required for FastBoot support.
+    if (!this._needsFastBootSupport) {
+      return null;
+    }
+
+    return tree;
+  },
+
   // holds configuration for this addon
   _config: null,
+
+  // controls if code needed to set CSP header in fastboot
+  // is included in build output
+  _needsFastBootSupport: null,
 
   // holds calculated policy string
   _policyString: null,
