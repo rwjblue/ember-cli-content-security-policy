@@ -186,7 +186,7 @@ module.exports = {
     let bodyParser = require('body-parser');
     app.use(REPORT_PATH, bodyParser.json({ type: 'application/csp-report' }));
     app.use(REPORT_PATH, bodyParser.json({ type: 'application/json' }));
-    app.use(REPORT_PATH, function(req, res, _next) {
+    app.use(REPORT_PATH, function(req, res) {
       // eslint-disable-next-line no-console
       console.log(chalk.red('Content Security Policy violation:') + '\n\n' + JSON.stringify(req.body, null, 2));
       res.send({ status:'ok' });

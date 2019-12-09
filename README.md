@@ -14,6 +14,7 @@ Compatibility
 
 * Ember.js v2.18 or above
 * Ember CLI v3.4 or above
+* Node.js v8 or above
 
 
 Installation
@@ -128,7 +129,8 @@ module.exports = function(environment) {
 };
 ```
 
-## FastBoot Integration
+FastBoot Integration
+------------------------------------------------------------------------------
 
 This addon sets CSP headers in FastBoot if enabled for FastBoot environment and `delivery`
 contains `"header"`. If using `reportOnly` mode you must provide a valid `reportUri` directive
@@ -161,7 +163,8 @@ default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style
 + When setting the values on policy object (`ENV['ember-cli-content-security-policy'].policy`) to 'self', 'none', 'unsafe-inline' or 'unsafe-eval',
   you must include the single quote as shown in the default value above.
 
-## Resources
+Resources
+------------------------------------------------------------------------------
 
 * https://w3c.github.io/webappsec-csp/
 * http://content-security-policy.com/
@@ -169,3 +172,13 @@ default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style
 * http://caniuse.com/contentsecuritypolicy
 * http://caniuse.com/contentsecuritypolicy2
 * https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/45542.pdf
+
+Contributing
+------------------------------------------------------------------------------
+
+See the [Contributing](CONTRIBUTING.md) guide for details.
+
+License
+------------------------------------------------------------------------------
+
+This project is licensed under the [MIT License](LICENSE.md).
