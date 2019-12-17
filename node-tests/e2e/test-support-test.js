@@ -2,6 +2,7 @@ const expect = require('chai').expect;
 const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
 const fs = require('fs-extra');
 const {
+  CSP_META_TAG_REG_EXP,
   removeConfig,
   setConfig
 } = require('../utils');
@@ -58,6 +59,19 @@ describe('e2e: provides test support', function() {
       } catch({ code }) {
         expect(code).to.equal(1);
       }
+    });
+
+    it('ensures CSP is applied in tests regradless if executed with development server or not', async function() {
+      await setConfig(app, {
+        delivery: ['header'],
+      });
+
+      await app.runEmberCommand('build');
+
+      let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
+      let indexHtml = await fs.readFile(app.filePath('dist/index.html'), 'utf8');
+      expect(testsIndexHtml).to.match(CSP_META_TAG_REG_EXP);
+      expect(indexHtml).to.not.match(CSP_META_TAG_REG_EXP);
     });
 
     it('does not cause tests failures if addon is disabled', async function() {

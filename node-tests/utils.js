@@ -1,5 +1,7 @@
 const fs = require('fs-extra');
 
+const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content="(.*)">/i;
+
 function getConfigPath(app) {
   return app.filePath('config/content-security-policy.js');
 }
@@ -22,6 +24,7 @@ async function removeConfig(app) {
 }
 
 module.exports = {
+  CSP_META_TAG_REG_EXP,
   removeConfig,
   setConfig,
 };

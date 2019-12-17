@@ -175,7 +175,12 @@ module.exports = {
     }
 
     // inject CSP meta tag
-    if (type === 'head' && this._config.delivery.indexOf('meta') !== -1) {
+    if (
+      // if addon is configured to deliver CSP by meta tag
+      ( type === 'head' && this._config.delivery.indexOf('meta') !== -1 ) ||
+      // ensure it's injected in tests/index.html to ensure consistent test results
+      type === 'test-head'
+    ) {
       this.ui.writeWarnLine(
         'Content Security Policy does not support report only mode if delivered via meta element. ' +
         "Either set `ENV['ember-cli-content-security-policy'].reportOnly` to `false` or remove `'meta'` " +
