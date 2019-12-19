@@ -1,8 +1,11 @@
 const expect = require('chai').expect;
 const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
 const fs = require('fs-extra');
+const denodeify = require('denodeify');
+const request = denodeify(require('request'));
 const {
   CSP_META_TAG_REG_EXP,
+  getConfigPath,
   removeConfig,
   setConfig
 } = require('../utils');
@@ -72,6 +75,99 @@ describe('e2e: provides test support', function() {
       let indexHtml = await fs.readFile(app.filePath('dist/index.html'), 'utf8');
       expect(testsIndexHtml).to.match(CSP_META_TAG_REG_EXP);
       expect(indexHtml).to.not.match(CSP_META_TAG_REG_EXP);
+    });
+
+    describe('it uses CSP configuration for test environment if running tests', function() {
+      before(async function() {
+        // setConfig utility does not support configuration depending on environment
+        // need to write the file manually
+        let configuration = `
+          module.exports = function(environment) {
+            return {
+              delivery: ['header', 'meta'],
+              policy: {
+                'default-src': environment === 'test' ? ["'none'"] : ["'self'"]
+              },
+              reportOnly: false
+            };
+          };
+        `;
+        await fs.writeFile(getConfigPath(app), configuration);
+
+        await app.startServer();
+      });
+
+      after(async function() {
+        await app.stopServer();
+      });
+
+      it('uses CSP configuration for test environment for meta tag in tests/index.html', async function() {
+        let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
+        let indexHtml = await fs.readFile(app.filePath('dist/index.html'), 'utf8');
+
+        let [,cspInTestsIndexHtml] = testsIndexHtml.match(CSP_META_TAG_REG_EXP);
+        let [,cspInIndexHtml] = indexHtml.match(CSP_META_TAG_REG_EXP);
+
+        expect(cspInTestsIndexHtml).to.include("default-src 'none';");
+        expect(cspInIndexHtml).to.include("default-src 'self';");
+      });
+
+      it('uses CSP configuration for test environment for CSP header serving tests/', async function() {
+        let responseForTests = await request({
+          url: 'http://localhost:49741/tests',
+          headers: {
+            'Accept': 'text/html'
+          }
+        });
+        let responseForApp = await request({
+          url: 'http://localhost:49741',
+          headers: {
+            'Accept': 'text/html'
+          }
+        });
+
+        let cspForTests = responseForTests.headers['content-security-policy'];
+        let cspForApp = responseForApp.headers['content-security-policy'];
+
+        expect(cspForTests).to.include("default-src 'none';");
+        expect(cspForApp).to.include("default-src 'self';");
+      });
+    });
+
+    describe('includes frame-src required by testem', function() {
+      before(async function() {
+        await setConfig(app, {
+          delivery: ['header', 'meta'],
+          reportOnly: false,
+        });
+
+        await app.startServer();
+      });
+
+      after(async function() {
+        await app.stopServer();
+
+        await removeConfig(app);
+      });
+
+      it('includes frame-src required by testem in CSP delivered by meta tag', async function() {
+        let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
+        let [,cspInTestsIndexHtml] = testsIndexHtml.match(CSP_META_TAG_REG_EXP);
+
+        expect(cspInTestsIndexHtml).to.include("frame-src 'self';");
+      });
+
+      it('includes frame-src required by testem in CSP delivered by HTTP header', async function() {
+        let responseForTests = await request({
+          url: 'http://localhost:49741/tests',
+          headers: {
+            'Accept': 'text/html'
+          }
+        });
+        let cspForTests = responseForTests.headers['content-security-policy'];
+
+        expect(cspForTests).to.include("frame-src 'self';");
+      });
     });
 
     it('does not cause tests failures if addon is disabled', async function() {

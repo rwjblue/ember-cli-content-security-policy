@@ -25,6 +25,7 @@ async function removeConfig(app) {
 
 module.exports = {
   CSP_META_TAG_REG_EXP,
+  getConfigPath,
   removeConfig,
   setConfig,
 };
