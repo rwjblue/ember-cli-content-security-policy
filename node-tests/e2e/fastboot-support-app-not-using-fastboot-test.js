@@ -8,8 +8,7 @@ function getRunTimeConfig(html) {
   return JSON.parse(decodeURIComponent(encodedConfig));
 }
 
-// ember-cli-version-checker reports wrong information if used together with ember-cli-addon-tests.
-describe.skip('e2e: fastboot integration if consumer does not use FastBoot', function() {
+describe('e2e: fastboot integration if consumer does not use FastBoot', function() {
   this.timeout(300000);
 
   let app;
