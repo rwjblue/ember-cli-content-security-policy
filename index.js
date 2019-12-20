@@ -233,7 +233,7 @@ module.exports = {
 
     // inject event listener needed for test support
     if (type === 'test-body' && this._config.failTests) {
-      let qunitDependency = (new VersionChecker(this)).for('qunit');
+      let qunitDependency = (new VersionChecker(this.project)).for('qunit');
       if (qunitDependency.exists() && qunitDependency.lt('2.9.2')) {
         this.ui.writeWarnLine(
           'QUnit < 2.9.2 violates a strict Content Security Policy (CSP) by itself. ' +
