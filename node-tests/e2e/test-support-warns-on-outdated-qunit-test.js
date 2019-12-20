@@ -1,7 +1,7 @@
 const expect = require('chai').expect;
 const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
 
-describe('e2e: provides test support', function() {
+describe('e2e: test support warns if dependencies are not supported', function() {
   this.timeout(300000);
 
   it('warns if QUnit version is to old', async function() {
