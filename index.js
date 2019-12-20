@@ -6,6 +6,7 @@ const {
   appendSourceList,
   buildPolicyString,
   calculateConfig,
+  isIndexHtmlForTesting,
   readConfig
 } = require('./lib/utils');
 
@@ -68,18 +69,29 @@ module.exports = {
     // hook may be called more than once, but we only need to calculate once
     if (!this._config) {
       let { app, project } = this;
-      let ownConfig = readConfig(project, environment);
       let ui = project.ui;
+      let ownConfig = readConfig(project, environment);
       let config = calculateConfig(environment, ownConfig, runConfig, ui);
-
-      // add static test nonce if build includes tests
-      // Note: app is not defined for CLI commands
-      if (app && app.tests) {
-        appendSourceList(config.policy, 'script-src', `'nonce-${STATIC_TEST_NONCE}'`);
-      }
 
       this._config = config;
       this._policyString = buildPolicyString(config.policy);
+
+      // generate config for test environment if app includes tests
+      // Note: app is not defined for CLI commands
+      if (app && app.tests) {
+        let ownConfigForTest = readConfig(project, 'test');
+        let runConfigForTest = project.config('test');
+        let configForTest = calculateConfig('test', ownConfigForTest, runConfigForTest, ui);
+
+        // add static nonce required for tests
+        appendSourceList(configForTest.policy, 'script-src', `'nonce-${STATIC_TEST_NONCE}'`);
+
+        // testem requires frame-src to run
+        configForTest.policy['frame-src'] = ["'self'"];
+
+        this._configForTest = configForTest;
+        this._policyStringForTest = buildPolicyString(configForTest.policy);
+      }
     }
 
     // CSP header should only be set in FastBoot if
@@ -120,10 +132,17 @@ module.exports = {
     // support live reload, executing tests in development enviroment via
     // `http://localhost:4200/tests` and reporting CSP violations on CLI.
     let policyObject = this._config.policy;
+    let policyObjectForTest = this._configForTest.policy;
 
     // live reload requires some addition CSP directives
     if (options.liveReload) {
       allowLiveReload(policyObject, {
+        hostname: options.liveReloadHost,
+        port: options.liveReloadPort,
+        ssl: options.ssl
+      });
+
+      allowLiveReload(policyObjectForTest, {
         hostname: options.liveReloadHost,
         port: options.liveReloadPort,
         ssl: options.ssl
@@ -135,15 +154,22 @@ module.exports = {
       let ecHost = options.host || 'localhost';
       let ecProtocol = options.ssl ? 'https://' : 'http://';
       let ecOrigin = ecProtocol + ecHost + ':' + options.port;
+
       appendSourceList(policyObject, 'connect-src', ecOrigin);
+      appendSourceList(policyObjectForTest, 'connect-src', ecOrigin);
+
       policyObject['report-uri'] = ecOrigin + REPORT_PATH;
+      policyObjectForTest['report-uri'] = policyObject['report-uri'];
     }
 
     this._policyString = buildPolicyString(policyObject);
+    this._policyStringForTest = buildPolicyString(policyObjectForTest);
 
     app.use((req, res, next) => {
-      let header = this._config.reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
-      let policyString = this._policyString;
+      let isRequestForTests = req.originalUrl.startsWith('/tests');
+      let config = isRequestForTests ? this._configForTest : this._config;
+      let policyString = isRequestForTests ? this._policyStringForTest : this._policyString;
+      let header = config.reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
 
       // clear existing headers before setting ours
       res.removeHeader(CSP_HEADER);
@@ -175,21 +201,34 @@ module.exports = {
     }
 
     // inject CSP meta tag
-    if (type === 'head' && this._config.delivery.indexOf('meta') !== -1) {
+    if (
+      // if addon is configured to deliver CSP by meta tag
+      ( type === 'head' && this._config.delivery.indexOf('meta') !== -1 ) ||
+      // ensure it's injected in tests/index.html to ensure consistent test results
+      type === 'test-head'
+    ) {
+      // skip head slot for tests/index.html to prevent including the CSP meta tag twice
+      if (type === 'head' && isIndexHtmlForTesting(existingContent)) {
+        return;
+      }
+
+      let config = type === 'head' ? this._config : this._configForTest;
+      let policyString = type === 'head' ? this._policyString : this._policyStringForTest;
+
       this.ui.writeWarnLine(
         'Content Security Policy does not support report only mode if delivered via meta element. ' +
         "Either set `ENV['ember-cli-content-security-policy'].reportOnly` to `false` or remove `'meta'` " +
         "from `ENV['ember-cli-content-security-policy'].delivery`.",
-        this._config.reportOnly
+        config.reportOnly
       );
 
-      unsupportedDirectives(this._config.policy).forEach(function(name) {
+      unsupportedDirectives(config.policy).forEach(function(name) {
         let msg = 'CSP delivered via meta does not support `' + name + '`, ' +
                   'per the W3C recommendation.';
         console.log(chalk.yellow(msg)); // eslint-disable-line no-console
       });
 
-      return `<meta http-equiv="${CSP_HEADER}" content="${this._policyString}">`;
+      return `<meta http-equiv="${CSP_HEADER}" content="${policyString}">`;
     }
 
     // inject event listener needed for test support

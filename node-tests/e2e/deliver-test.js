@@ -3,11 +3,11 @@ const denodeify = require('denodeify');
 const request = denodeify(require('request'));
 const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
 const {
+  CSP_META_TAG_REG_EXP,
   removeConfig,
   setConfig
 } = require('../utils');
 
-const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content="(.*)">/i;
 
 describe('e2e: delivers CSP as configured', function() {
   this.timeout(300000);
