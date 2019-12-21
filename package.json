@@ -19,7 +19,7 @@
     "start": "ember serve",
     "test": "ember test",
     "test:all": "ember try:each",
-    "test:node": "for i in node-tests/*/*; do mocha $i; done"
+    "test:node": "( for i in node-tests/*/*; do mocha $i || exit $?; done )"
   },
   "dependencies": {
     "body-parser": "^1.17.0",
