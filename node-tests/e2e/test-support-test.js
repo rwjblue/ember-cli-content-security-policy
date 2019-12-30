@@ -185,4 +185,21 @@ describe('e2e: provides test support', function() {
 
     expect(code).to.equal(0);
   });
+
+  it('does not break development server for builds not including tests', async function() {
+    await app.startServer({
+      additionalArguments: ['-prod']
+    });
+
+    let response = await request({
+      url: 'http://localhost:49741/',
+      headers: {
+        'Accept': 'text/html'
+      }
+    });
+
+    expect(response.statusCode).to.equal(200);
+
+    await app.stopServer();
+  });
 });
