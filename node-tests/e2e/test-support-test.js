@@ -197,8 +197,15 @@ describe('e2e: provides test support', function() {
         'Accept': 'text/html'
       }
     });
+    let responseForTests = await request({
+      url: 'http://localhost:49741/tests',
+      headers: {
+        'Accept': 'text/html'
+      }
+    });
 
     expect(response.statusCode).to.equal(200);
+    expect(responseForTests.statusCode).to.equal(200);
 
     await app.stopServer();
   });

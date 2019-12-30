@@ -130,7 +130,11 @@ module.exports = {
     // support live reload, executing tests in development enviroment via
     // `http://localhost:4200/tests` and reporting CSP violations on CLI.
     let policyObject = this._config.policy;
-    let policyObjectForTest = this._configForTest.policy;
+
+    // Policy object for tests is only calculated if build includes tests
+    // (`app.tests === true`). If it hasn't been calculated at all, there
+    // is no need to recalculate it.
+    let policyObjectForTest = this._configForTest ? this._configForTest.policy : null;
 
     // live reload requires some addition CSP directives
     if (options.liveReload) {
@@ -140,11 +144,13 @@ module.exports = {
         ssl: options.ssl
       });
 
-      allowLiveReload(policyObjectForTest, {
-        hostname: options.liveReloadHost,
-        port: options.liveReloadPort,
-        ssl: options.ssl
-      });
+      if (policyObjectForTest) {
+        allowLiveReload(policyObjectForTest, {
+          hostname: options.liveReloadHost,
+          port: options.liveReloadPort,
+          ssl: options.ssl
+        });
+      }
     }
 
     // add report URI to policy object and allow it as connection source
@@ -154,17 +160,25 @@ module.exports = {
       let ecOrigin = ecProtocol + ecHost + ':' + options.port;
 
       appendSourceList(policyObject, 'connect-src', ecOrigin);
-      appendSourceList(policyObjectForTest, 'connect-src', ecOrigin);
-
       policyObject['report-uri'] = ecOrigin + REPORT_PATH;
-      policyObjectForTest['report-uri'] = policyObject['report-uri'];
+
+      if (policyObjectForTest) {
+        appendSourceList(policyObjectForTest, 'connect-src', ecOrigin);
+        policyObjectForTest['report-uri'] = policyObject['report-uri'];
+      }
     }
 
     this._policyString = buildPolicyString(policyObject);
-    this._policyStringForTest = buildPolicyString(policyObjectForTest);
+
+    if (policyObjectForTest) {
+      this._policyStringForTest = buildPolicyString(policyObjectForTest);
+    }
 
     app.use((req, res, next) => {
-      let isRequestForTests = req.originalUrl.startsWith('/tests');
+      // Use policy for test environment if
+      // - the request is for tests and
+      // - the build include tests
+      let isRequestForTests = req.originalUrl.startsWith('/tests') && app.tests;
       let config = isRequestForTests ? this._configForTest : this._config;
       let policyString = isRequestForTests ? this._policyStringForTest : this._policyString;
       let header = config.reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
@@ -282,10 +296,16 @@ module.exports = {
   // holds configuration for this addon
   _config: null,
 
+  // holds configuration for test environment for this addon
+  _configForTest: null,
+
   // controls if code needed to set CSP header in fastboot
   // is included in build output
   _needsFastBootSupport: null,
 
   // holds calculated policy string
   _policyString: null,
+
+  // holds calculated policy string for test environment
+  _policyStringForTest: null,
 };
