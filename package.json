@@ -55,7 +55,7 @@
     "eslint-plugin-node": "^7.0.1",
     "fs-extra": "^8.0.1",
     "loader.js": "^4.7.0",
-    "mocha": "^6.1.4",
+    "mocha": "^7.0.0",
     "qunit-dom": "^0.8.0",
     "request": "^2.88.0"
   },
