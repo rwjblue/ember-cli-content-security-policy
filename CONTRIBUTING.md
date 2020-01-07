@@ -4,7 +4,7 @@
 
 * `git clone https://github.com/rwjblue/ember-cli-content-security-policy.git`
 * `cd ember-cli-content-security-policy`
-* `yarn`
+* `yarn install`
 
 ## Linting
 

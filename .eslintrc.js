@@ -1,7 +1,8 @@
 module.exports = {
   root: true,
+  parser: 'babel-eslint',
   parserOptions: {
-    ecmaVersion: 2017,
+    ecmaVersion: 2018,
     sourceType: 'module'
   },
   plugins: [
@@ -15,15 +16,7 @@ module.exports = {
     browser: true
   },
   rules: {
-    // disallow declaration of variables that are not used in the code
-    'no-unused-vars': [
-      'error',
-      {
-        varsIgnorePattern: '^_',
-        argsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_',
-      },
-    ],
+    'ember/no-jquery': 'error'
   },
   overrides: [
     // node files
