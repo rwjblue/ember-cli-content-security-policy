@@ -83,8 +83,13 @@ module.exports = {
         let runConfigForTest = project.config('test');
         let configForTest = calculateConfig('test', ownConfigForTest, runConfigForTest, ui);
 
-        // add static nonce required for tests
-        appendSourceList(configForTest.policy, 'script-src', `'nonce-${STATIC_TEST_NONCE}'`);
+        // add static nonce required for tests, but only if if script-src
+        // does not contain 'unsafe-inline'. if a nonce is present, browsers
+        // ignore the 'unsafe-inline' directive.
+        let scriptSrc = configForTest.policy['script-src'];
+        if (!(scriptSrc && scriptSrc.includes("'unsafe-inline'"))) {
+          appendSourceList(configForTest.policy, 'script-src', `'nonce-${STATIC_TEST_NONCE}'`);
+        }
 
         // testem requires frame-src to run
         configForTest.policy['frame-src'] = ["'self'"];
