@@ -75,6 +75,35 @@ describe('e2e: provides test support', function() {
     expect(indexHtml).to.not.match(CSP_META_TAG_REG_EXP);
   });
 
+  it('adds nonce to script-src when required by tests', async function() {
+    await setConfig(app, {
+      delivery: ['meta'],
+    });
+
+    await app.runEmberCommand('build');
+
+    let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
+    let [,cspInTestsIndexHtml] = testsIndexHtml.match(CSP_META_TAG_REG_EXP);
+
+    expect(cspInTestsIndexHtml).to.include('nonce-');
+  });
+
+  it('does not add nonce to script-src when it already has \'unsafe-inline\'', async function() {
+    await setConfig(app, {
+      delivery: ['meta'],
+      policy: {
+        'script-src': ["'self'", "'unsafe-inline'"]
+      }
+    });
+
+    await app.runEmberCommand('build');
+
+    let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
+    let [,cspInTestsIndexHtml] = testsIndexHtml.match(CSP_META_TAG_REG_EXP);
+
+    expect(cspInTestsIndexHtml).to.not.include('nonce-');
+  });
+
   describe('it uses CSP configuration for test environment if running tests', function() {
     before(async function() {
       // setConfig utility does not support configuration depending on environment
