@@ -194,7 +194,8 @@ module.exports = {
     app.use(REPORT_PATH, function(req, res, _next) {
       // eslint-disable-next-line no-console
       console.log(chalk.red('Content Security Policy violation:') + '\n\n' + JSON.stringify(req.body, null, 2));
-      res.send({ status:'ok' });
+      // send empty ok response, to avoid Cross-Origin Resource Blocking (CORB) warning
+      res.status(204).send();
     });
   },
 
