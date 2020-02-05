@@ -175,9 +175,9 @@ module.exports = {
     }
 
     app.use((req, res, next) => {
-      // Use policy for test environment if
-      // - the request is for tests and
-      // - the build include tests
+      // Use policy for test environment if both of these conditions are met:
+      // 1. the request is for tests and
+      // 2. the build include tests
       let isRequestForTests = req.originalUrl.startsWith('/tests') && app.tests;
       let config = isRequestForTests ? this._configForTest : this._config;
       let policyString = isRequestForTests ? this._policyStringForTest : this._policyString;
