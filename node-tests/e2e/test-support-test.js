@@ -214,4 +214,31 @@ describe('e2e: provides test support', function() {
 
     expect(code).to.equal(0);
   });
+
+  // One common scenario is when running the server in production mode locally, i.e.
+  // you are doing the production build on your local machine, connecting to your actual production server,
+  // for example via `ember serve -prod`. In these cases we don't want this addon to break.
+  it('does not break development server for builds not including tests', async function() {
+    await app.startServer({
+      additionalArguments: ['-prod']
+    });
+
+    let response = await request({
+      url: 'http://localhost:49741/',
+      headers: {
+        'Accept': 'text/html'
+      }
+    });
+    let responseForTests = await request({
+      url: 'http://localhost:49741/tests',
+      headers: {
+        'Accept': 'text/html'
+      }
+    });
+
+    expect(response.statusCode).to.equal(200);
+    expect(responseForTests.statusCode).to.equal(200);
+
+    await app.stopServer();
+  });
 });
