@@ -61,7 +61,7 @@
     "request": "^2.88.0"
   },
   "engines": {
-    "node": "8.* || >= 10.*"
+    "node": "10.* || >= 12.*"
   },
   "ember": {
     "edition": "octane"
