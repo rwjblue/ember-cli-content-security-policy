@@ -233,12 +233,14 @@ module.exports = {
       let config = type === 'head' ? this._config : this._configForTest;
       let policyString = type === 'head' ? this._policyString : this._policyStringForTest;
 
-      this.ui.writeWarnLine(
-        'Content Security Policy does not support report only mode if delivered via meta element. ' +
-        "Either set `ENV['ember-cli-content-security-policy'].reportOnly` to `false` or remove `'meta'` " +
-        "from `ENV['ember-cli-content-security-policy'].delivery`.",
-        config.reportOnly
-      );
+      if (this._config.reportOnly && this._config.delivery.indexOf('meta') !== -1) {
+        this.ui.writeWarnLine(
+          'Content Security Policy does not support report only mode if delivered via meta element. ' +
+          "Either set `ENV['ember-cli-content-security-policy'].reportOnly` to `false` or remove `'meta'` " +
+          "from `ENV['ember-cli-content-security-policy'].delivery`.",
+          config.reportOnly
+        );
+      }
 
       unsupportedDirectives(config.policy).forEach(function(name) {
         let msg = 'CSP delivered via meta does not support `' + name + '`, ' +
