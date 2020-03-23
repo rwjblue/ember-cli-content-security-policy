@@ -172,12 +172,9 @@ module.exports = {
       // clear existing headers before setting ours
       res.removeHeader(CSP_HEADER);
       res.removeHeader(CSP_HEADER_REPORT_ONLY);
-      res.setHeader(header, policyString);
 
-      // for Internet Explorer 11 and below (Edge support the standard header name)
-      res.removeHeader('X-' + CSP_HEADER);
-      res.removeHeader('X-' + CSP_HEADER_REPORT_ONLY);
-      res.setHeader('X-' + header, policyString);
+      // set csp header
+      res.setHeader(header, policyString);
 
       next();
     });
