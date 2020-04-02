@@ -201,4 +201,57 @@ describe('e2e: fastboot integration', function() {
       expect(response.body).to.not.include('instance-initializers/content-security-policy');
     });
   });
+
+  describe('scenario: CSP header already defined', function() {
+    before(async function() {
+      await fs.rename(app.filePath('server.js'), app.filePath('server.js.org'));
+
+      // FastBoot App Server that sets a CSP header
+      await fs.writeFile(app.filePath('server.js'),
+        `
+          const FastBootAppServer = require('fastboot-app-server');
+          const ExpressHTTPServer = require('fastboot-app-server/src/express-http-server');
+
+          const httpServer = new ExpressHTTPServer({
+            port: 49742,
+          });
+          const app = httpServer.app;
+
+          app.use(function (req, res, next) {
+            res.append('Content-Security-Policy', "default-src 'none';");
+            next();
+          });
+
+          let server = new FastBootAppServer({
+            distPath: 'dist',
+            httpServer: httpServer,
+          });
+
+          server.start();
+        `
+      );
+
+      await app.runEmberCommand('build');
+      await startServer();
+    });
+
+    after(async function() {
+      await stopServer();
+      await removeConfig(app);
+      await fs.rename(app.filePath('server.js.org'), app.filePath('server.js'));
+    });
+
+    it('does not override existing CSP header if served via FastBoot', async function() {
+      let response = await request({
+        url: 'http://localhost:49742',
+        headers: {
+          'Accept': 'text/html'
+        },
+      });
+      expect(response.headers).to.include.key('content-security-policy');
+      expect(response.headers['content-security-policy']).to.equal("default-src 'none';");
+
+      expect(response.headers).to.not.include.key('content-security-policy-report-only');
+    });
+  })
 });

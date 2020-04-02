@@ -26,7 +26,14 @@ export function initialize(appInstance) {
 
   let { policy, reportOnly } = readAddonConfig(appInstance);
   let header = reportOnly ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
-  fastboot.get('response.headers').set(header, policy);
+  let responseHeaders = fastboot.get('response.headers');
+
+  // do not override existing CSP header
+  if (responseHeaders.has('Content-Security-Policy-Report-Only') || responseHeaders.has('Content-Security-Policy')) {
+    return;
+  }
+
+  responseHeaders.set(header, policy);
 }
 
 export default {
