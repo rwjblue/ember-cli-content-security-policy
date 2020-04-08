@@ -236,8 +236,8 @@ module.exports = {
       if (this._config.reportOnly && this._config.delivery.indexOf('meta') !== -1) {
         this.ui.writeWarnLine(
           'Content Security Policy does not support report only mode if delivered via meta element. ' +
-          "Either set `ENV['ember-cli-content-security-policy'].reportOnly` to `false` or remove `'meta'` " +
-          "from `ENV['ember-cli-content-security-policy'].delivery`.",
+          "Either set `reportOnly` to `false` or remove `'meta' from `delivery` in " +
+          '`config/content-security-policy.js`.',
           config.reportOnly
         );
       }
