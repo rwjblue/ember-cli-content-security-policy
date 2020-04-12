@@ -1,13 +1,12 @@
 # ember-cli-content-security-policy
 
-This addon makes it easy to use Content Security Policy (CSP) in your project. It can be deployed either
-via a `Content-Security-Policy` header sent from the Ember CLI Express server, or as a meta tag in the
-`index.html` file.
+This addon makes it easy to use [Content Security Policy](https://content-security-policy.com/) (CSP) in your project. The policy can be delivered either via a `Content-Security-Policy` HTTP response header or as a meta tag in the `index.html` file.
 
-When using the header, configuration is still needed on the production server (Ember CLI's express server 
-is not intended for production use). When using the meta tag this addon can be used for production deployment.
+If configured to deliver the CSP using a HTTP response header, the header is set automatically if served with Ember CLI's express server in development or via [FastBoot](https://ember-fastboot.com/) in production. If FastBoot is not used to serve the app in production, the web server must be configured to set the CSP header. The configured CSP could be exported with a provided Ember CLI command.
+
+If configured to deliver the CSP using the meta tag no additional configuration of the web server serving the application in production is needed.
+
 In any case, using this addon helps keeping CSP in the forefront of your thoughts while developing an Ember application.
-
 
 Compatibility
 ------------------------------------------------------------------------------
@@ -15,7 +14,6 @@ Compatibility
 * Ember.js v2.18 or above
 * Ember CLI v3.4 or above
 * Node.js v10 or above
-
 
 Installation
 ------------------------------------------------------------------------------
@@ -97,6 +95,8 @@ export default function(environment) {
 }
 ```
 
+> Keywords such as `self`, `none`, `unsafe-inline`, nonces and digests must be wrapped in single quotes (`'`) as shown above. Please find more details about valid source expression in [§ 2.3.1. Source Lists of CSP specification](https://www.w3.org/TR/CSP3/#framework-directive-source-list).
+
 ### Example
 
 If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.local** and you want to deliver the CSP using a meta element:
@@ -129,18 +129,32 @@ module.exports = function(environment) {
 };
 ```
 
-## FastBoot Integration
 
-This addon sets CSP headers in FastBoot if enabled for FastBoot environment and `delivery`
-contains `"header"`. If using `reportOnly` mode you must provide a valid `reportUri` directive
-pointing to an endpoint that accepts violation reports. As `reportUri` directive is deprecated
-you should additionally provide a `reportTo` directive, even so it'ss only supported by Google
-Chrome so far.
+FastBoot Integration
+------------------------------------------------------------------------------
 
-## External Configuration
+This addon sets the CSP HTTP response header in FastBoot if it's enabled for the used environment and `delivery` contains `"header"`. It does not override existing CSP headers.
 
-In order to configure your production server, you can use the `csp-headers` command to obtain
-the current headers:
+If using `reportOnly` mode you must provide a valid `reportUri` directive pointing to an endpoint that accepts violation reports. As `reportUri` directive is deprecated you should additionally provide a `reportTo` directive, even so it's only supported by Google Chrome so far.
+
+If you don't want the addon to inject the CSP header in FastBoot on production (e.g. cause CSP header should be set by a reverse proxy in front of FastBoot App Server), you should either remove `"header"` from `delivery` option or disable the addon entirely.
+
+```js
+// config/content-security-policy.js
+
+module.exports = function(environment) {
+  return {
+    enabled: environment !== 'production',
+    delivery: ["header"],
+  };
+};
+```
+
+
+External Configuration
+------------------------------------------------------------------------------
+
+In order to configure your production web server, you can use the `csp-headers` Ember CLI command to obtain the configured Content Security Policy:
 
 ```bash
 $ ember csp-headers --environment production --report-uri /csp-report
@@ -153,20 +167,38 @@ $ ember csp-headers --environment production --report-uri /csp-report
 default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; report-uri /csp-report;
 ```
 
-*Please note*:
-+ When running `ember serve` with live reload enabled, we also add the `liveReloadPort` to
-  the `connect-src` and `script-src` whitelists.
-+ Browser support for CSP varies between browsers, for example the meta-tag delivery method is only available
-  in newer browsers. See the resources below.
-+ The Internet Explorer variant of the header (prefixed with `X-`) is automatically added.
-+ When setting the values on policy object (`ENV['ember-cli-content-security-policy'].policy`) to 'self', 'none', 'unsafe-inline' or 'unsafe-eval',
-  you must include the single quote as shown in the default value above.
 
-## Resources
+Development Support
+------------------------------------------------------------------------------
 
-* https://w3c.github.io/webappsec-csp/
-* http://content-security-policy.com/
-* https://developer.mozilla.org/en-US/docs/Web/Security/CSP/Using_Content_Security_Policy
-* http://caniuse.com/contentsecuritypolicy
-* http://caniuse.com/contentsecuritypolicy2
-* https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/45542.pdf
+Ember CLI's live reload feature requires a Web Socket connection. If live reload is used with `ember serve` or `ember test --server` the URL used for that Web Socket connection is injected into `connect-src` and `script-src` directives automatically.
+
+
+Test Support
+------------------------------------------------------------------------------
+
+The addon helps you to ensure that your app or addon is compliant with a specific Content Security Policy by providing test support. It causes tests to fail if the code triggers a violation of the configured CSP.
+
+It's recommended to test your project for CSP compliance. But you could disable it nevertheless by setting `enabled` option to `false` for `test` environment:
+
+```js
+// config/content-security-policy.js
+
+module.exports = function(environment) {
+  return {
+    enabled: environment !== 'test',
+  };
+};
+```
+
+
+Compatibility with other addons
+------------------------------------------------------------------------------
+
+Some addons are not compatible with a strict Content Security Policy. If you face any CSP violations caused by a third-party addon please report at their side. Often it's only a small change to required to make it compliant with a strict CSP. You may want to suggest adding this addon to test for compliance with a strict CSP.
+
+For some addons compliance with a strict CSP requires a custom configuration. This documentation lists required configuration for some very famous once.
+
+### Ember Auto Import
+
+[Ember Auto Import](https://github.com/ef4/ember-auto-import#ember-auto-import) uses the `eval` function by default in development builds. This violates the default CSP policy. It's recommended to set Ember Auto Import's `forbidEval` option to `true` if using Content Security Policy. You should _not_ add `'unsafe-eval'` to `script-src` directive as this disalbes main security provided by CSP.
