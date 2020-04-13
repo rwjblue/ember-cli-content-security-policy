@@ -1,6 +1,8 @@
 # Deprecations
 
-## Configuration is moved to config/content-security-policy.js
+## Until 3.0
+
+### Configuration is moved to config/content-security-policy.js
 
 Configuration has been moved from `config/environment.js` to `config/content-security-policy.js`.
 The configuration keys have been changed as well. Please follow these steps for migrating your existing configuration:
