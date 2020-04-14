@@ -75,33 +75,56 @@ describe('e2e: provides test support', function() {
     expect(indexHtml).to.not.match(CSP_META_TAG_REG_EXP);
   });
 
-  it('adds nonce to script-src when required by tests', async function() {
-    await setConfig(app, {
-      delivery: ['meta'],
+  describe('adds nonce to script-src if needed', function() {
+    afterEach(async function() {
+      await removeConfig(app);
+      await app.stopServer();
     });
 
-    await app.runEmberCommand('build');
+    it('adds nonce to script-src when required by tests', async function() {
+      await setConfig(app, {
+        delivery: ['meta'],
+      });
 
-    let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
-    let [,cspInTestsIndexHtml] = testsIndexHtml.match(CSP_META_TAG_REG_EXP);
+      await app.startServer();
 
-    expect(cspInTestsIndexHtml).to.include('nonce-');
-  });
+      let response = await request({
+        url: 'http://localhost:49741/tests/',
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
 
-  it('does not add nonce to script-src when it already has \'unsafe-inline\'', async function() {
-    await setConfig(app, {
-      delivery: ['meta'],
-      policy: {
-        'script-src': ["'self'", "'unsafe-inline'"]
-      }
+      let cspInHeader = response.headers['content-security-policy-report-only'];
+      let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
+      [cspInHeader, cspInMetaElement].forEach((csp) => {
+        expect(csp).to.match(/script-src [^;]* 'nonce-/);
+      });
     });
 
-    await app.runEmberCommand('build');
+    it('does not add nonce to script-src if directive contains \'unsafe-inline\'', async function() {
+      await setConfig(app, {
+        delivery: ['meta'],
+        policy: {
+          'script-src': ["'self'", "'unsafe-inline'"]
+        }
+      });
 
-    let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
-    let [,cspInTestsIndexHtml] = testsIndexHtml.match(CSP_META_TAG_REG_EXP);
+      await app.startServer();
 
-    expect(cspInTestsIndexHtml).to.not.include('nonce-');
+      let response = await request({
+        url: 'http://localhost:49741/tests/',
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
+
+      let cspInHeader = response.headers['content-security-policy-report-only'];
+      let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
+      [cspInHeader, cspInMetaElement].forEach((csp) => {
+        expect(csp).to.not.include('nonce-');
+      });
+    });
   });
 
   describe('it uses CSP configuration for test environment if running tests', function() {

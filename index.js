@@ -183,7 +183,8 @@ module.exports = {
       // Use policy for test environment if both of these conditions are met:
       // 1. the request is for tests and
       // 2. the build include tests
-      let isRequestForTests = req.originalUrl.startsWith('/tests') && app.tests;
+      let buildIncludeTests = this.app.tests;
+      let isRequestForTests = req.originalUrl.startsWith('/tests') && buildIncludeTests;
       let config = isRequestForTests ? this._configForTest : this._config;
       let policyString = isRequestForTests ? this._policyStringForTest : this._policyString;
       let header = config.reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
