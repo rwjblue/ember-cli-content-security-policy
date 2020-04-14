@@ -148,21 +148,15 @@ describe('e2e: delivers CSP as configured', function() {
   });
 
   describe('feature: live reload support', function() {
-    before(async function() {
-      await setConfig(app, {
-        delivery: ['header', 'meta'],
-      });
-    });
-
-    after(async function() {
+    afterEach(async function() {
+      await app.stopServer();
       await removeConfig(app);
     });
 
-    afterEach(async function() {
-      await app.stopServer();
-    });
-
     it('adds CSP directives required by live reload', async function() {
+      await setConfig(app, {
+        delivery: ['header', 'meta'],
+      });
       await app.startServer();
 
       let response = await request({
@@ -175,14 +169,17 @@ describe('e2e: delivers CSP as configured', function() {
       let cspInHeader = response.headers['content-security-policy-report-only'];
       let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
       [cspInHeader, cspInMetaElement].forEach((csp) => {
-        expect(csp).to.match(/connect-src [^;]* ws:\/\/0.0.0.0:49741/);
-        expect(csp).to.match(/connect-src [^;]* ws:\/\/localhost:49741/);
-        expect(csp).to.match(/script-src [^;]* 0.0.0.0:49741/);
-        expect(csp).to.match(/script-src [^;]* localhost:49741/);
+        expect(csp).to.match(/connect-src[^;]* ws:\/\/0.0.0.0:49741/);
+        expect(csp).to.match(/connect-src[^;]* ws:\/\/localhost:49741/);
+        expect(csp).to.match(/script-src[^;]* 0.0.0.0:49741/);
+        expect(csp).to.match(/script-src[^;]* localhost:49741/);
       });
     });
 
     it('takes live reload configuration into account', async function() {
+      await setConfig(app, {
+        delivery: ['header', 'meta'],
+      });
       await app.startServer({
         additionalArguments: [
           '--live-reload-host',
@@ -204,8 +201,39 @@ describe('e2e: delivers CSP as configured', function() {
       let cspInHeader = response.headers['content-security-policy-report-only'];
       let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
       [cspInHeader, cspInMetaElement].forEach((csp) => {
-        expect(csp).to.match(/connect-src [^;]* ws:\/\/examples.com:49494/);
-        expect(csp).to.match(/script-src [^;]* examples.com:49494/);
+        expect(csp).to.match(/connect-src[^;]* ws:\/\/examples.com:49494/);
+        expect(csp).to.match(/script-src[^;]* examples.com:49494/);
+      });
+    });
+
+    it('inherits from default-src if connect-src and script-src are not present', async function() {
+      await setConfig(app, {
+        delivery: ['header', 'meta'],
+        policy: {
+          'default-src': ["'self'", "foo.com"],
+        },
+      });
+      await app.startServer();
+
+      let response = await request({
+        url: 'http://localhost:49741',
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
+
+      let cspInHeader = response.headers['content-security-policy-report-only'];
+      let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
+      [cspInHeader, cspInMetaElement].forEach((csp) => {
+        expect(csp).to.match(/connect-src[^;]* 'self'/);
+        expect(csp).to.match(/connect-src[^;]* foo.com/);
+        expect(csp).to.match(/connect-src[^;]* ws:\/\/0.0.0.0:49741/);
+        expect(csp).to.match(/connect-src[^;]* ws:\/\/localhost:49741/);
+
+        expect(csp).to.match(/script-src[^;]* 'self'/);
+        expect(csp).to.match(/script-src[^;]* foo.com/);
+        expect(csp).to.match(/script-src[^;]* 0.0.0.0:49741/);
+        expect(csp).to.match(/script-src[^;]* localhost:49741/);
       });
     });
   });
