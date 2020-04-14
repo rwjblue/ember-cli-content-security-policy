@@ -123,7 +123,7 @@ module.exports = {
     };
   },
 
-  serverMiddleware: function({ app, options }) {
+  serverMiddleware: function({ app: expressApp, options }) {
     // Configuration is not changeable at run-time. Therefore it's safe to not
     // register the express middleware at all if addon is disabled and
     // precalculate dynamic values.
@@ -179,7 +179,7 @@ module.exports = {
       this._policyStringForTest = buildPolicyString(policyObjectForTest);
     }
 
-    app.use((req, res, next) => {
+    expressApp.use((req, res, next) => {
       // Use policy for test environment if both of these conditions are met:
       // 1. the request is for tests and
       // 2. the build include tests
@@ -201,9 +201,9 @@ module.exports = {
 
     // register handler for CSP reports
     let bodyParser = require('body-parser');
-    app.use(REPORT_PATH, bodyParser.json({ type: 'application/csp-report' }));
-    app.use(REPORT_PATH, bodyParser.json({ type: 'application/json' }));
-    app.use(REPORT_PATH, function(req, res) {
+    expressApp.use(REPORT_PATH, bodyParser.json({ type: 'application/csp-report' }));
+    expressApp.use(REPORT_PATH, bodyParser.json({ type: 'application/json' }));
+    expressApp.use(REPORT_PATH, function(req, res) {
       // eslint-disable-next-line no-console
       console.log(chalk.red('Content Security Policy violation:') + '\n\n' + JSON.stringify(req.body, null, 2));
       // send empty ok response, to avoid Cross-Origin Resource Blocking (CORB) warning
