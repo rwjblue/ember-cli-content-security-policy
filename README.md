@@ -76,7 +76,7 @@ If you omit some or all of the keys, the default configuration will be used, whi
 ```js
 // config/content-security-policy.js
 
-export default function(environment) {
+module.exports = function(environment) {
   return {
     delivery: ['header'],
     enabled: true,
