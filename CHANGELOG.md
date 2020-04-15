@@ -1,3 +1,11 @@
+## v2.0.0-1 (2020-04-15)
+
+#### :bug: Bug Fix
+* [#143](https://github.com/rwjblue/ember-cli-content-security-policy/pull/143) development server should use config for test if serving /tests/ ([@jelhan](https://github.com/jelhan))
+
+#### Committers: 1
+- Jeldrik Hanschke ([@jelhan](https://github.com/jelhan))
+
 ## v2.0.0-0 (2020-04-13)
 
 This releases cumulates the work of 1 1/2 years. Main changes are:
