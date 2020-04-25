@@ -199,11 +199,15 @@ Compatibility with other addons
 
 Some addons are not compatible with a strict Content Security Policy. If you face any CSP violations caused by a third-party addon please report at their side. Often it's only a small change to required to make it compliant with a strict CSP. You may want to suggest adding this addon to test for compliance with a strict CSP.
 
-For some addons compliance with a strict CSP requires a custom configuration. This documentation lists required configuration for some very famous once.
+For some addons compliance with a strict CSP requires a custom configuration. This documentation lists required configuration for some famous once. <!-- This docs should only include addons that are in Top 100 list provided by Ember Observer. -->
 
 ### Ember Auto Import
 
 [Ember Auto Import](https://github.com/ef4/ember-auto-import#ember-auto-import) uses the `eval` function by default in development builds. This violates the default CSP policy. It's recommended to set Ember Auto Import's `forbidEval` option to `true` if using Content Security Policy. You should _not_ add `'unsafe-eval'` to `script-src` directive as this disalbes main security provided by CSP.
+
+### ember-cli-code-coverage
+
+Ember-cli-code-coverage uses Istanbul, which injects `new Function('return this')` by default into the app. This requires `'unsafe-eval'` to be allowed by the script directive. Currently there isn't any other option than either adding `'unsafe-eval'` to script directive if code coverage is enabled or disable CSP at all. Details could be found in [this issue](https://github.com/kategengler/ember-cli-code-coverage/issues/214).
 
 
 Deprecations
