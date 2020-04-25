@@ -97,6 +97,8 @@ module.exports = function(environment) {
 
 > Keywords such as `self`, `none`, `unsafe-inline`, nonces and digests must be wrapped in single quotes (`'`) as shown above. Please find more details about valid source expression in [§ 2.3.1. Source Lists of CSP specification](https://www.w3.org/TR/CSP3/#framework-directive-source-list).
 
+Changes to the configuration require a restart of a running Ember development server instance.
+
 ### Example
 
 If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.local** and you want to deliver the CSP using a meta element:
