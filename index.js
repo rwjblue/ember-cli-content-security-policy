@@ -363,7 +363,7 @@ module.exports = {
       }
 
       // testem requires frame-src to run
-      config.policy['frame-src'] = ["'self'"];
+      appendSourceList(config.policy, 'frame-src', "'self'");
 
       // enforce delivery through meta
       config.delivery.push('meta');
