@@ -1,28 +1,31 @@
 const expect = require('chai').expect;
+const TestProject = require('ember-addon-tests').default;
 const denodeify = require('denodeify');
 const request = denodeify(require('request'));
-const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
 const {
   CSP_META_TAG_REG_EXP,
   removeConfig,
   setConfig
 } = require('../utils');
-
+const path = require('path');
 
 describe('e2e: delivers CSP as configured', function() {
   this.timeout(300000);
 
-  let app;
+  let testProject;
 
   before(async function() {
-    app = new AddonTestApp();
+    testProject = new TestProject({
+      projectRoot: path.join(__dirname, '../..')
+    });
 
-    await app.create('default', { noFixtures: true });
+    await testProject.createEmberApp();
+    await testProject.addOwnPackageAsDevDependency('ember-cli-content-security-policy');
   });
 
   describe('scenario: delivery through meta element', function() {
     before(async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         delivery: ['header', 'meta'],
         policy: {
           'font-src': ["'self'", "http://fonts.gstatic.com"],
@@ -30,12 +33,14 @@ describe('e2e: delivers CSP as configured', function() {
         reportOnly: false,
       });
 
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
     });
 
     after(async function() {
-      await app.stopServer();
-      await removeConfig(app);
+      await testProject.stopEmberServer();
+      await removeConfig(testProject);
     });
 
     it('creates a CSP meta tag if `delivery` option includes `"meta"`', async function() {
@@ -65,17 +70,19 @@ describe('e2e: delivers CSP as configured', function() {
 
   describe('scenario: report only', function() {
     before(async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         delivery: ['header'],
         reportOnly: true,
       });
 
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
     });
 
     after(async function() {
-      await app.stopServer();
-      await removeConfig(app);
+      await testProject.stopEmberServer();
+      await removeConfig(testProject);
     });
 
     it('uses Content-Security-Policy-Report-Only header if `reportOnly` option is `true`', async function() {
@@ -93,16 +100,18 @@ describe('e2e: delivers CSP as configured', function() {
 
   describe('scenario: delivery through meta only', function() {
     before(async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         delivery: ['meta'],
       });
 
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
     });
 
     after(async function() {
-      await app.stopServer();
-      await removeConfig(app);
+      await testProject.stopEmberServer();
+      await removeConfig(testProject);
     });
 
     it('does not deliver CSP through HTTP header if delivery does not include "header"', async function() {
@@ -121,16 +130,18 @@ describe('e2e: delivers CSP as configured', function() {
 
   describe('scenario: disabled', function() {
     before(async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         enabled: false,
       });
 
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
     });
 
     after(async function() {
-      await app.stopServer();
-      await removeConfig(app);
+      await testProject.stopEmberServer();
+      await removeConfig(testProject);
     });
 
     it('does not deliver CSP if `enabled` option is `false`', async function() {
@@ -149,15 +160,17 @@ describe('e2e: delivers CSP as configured', function() {
 
   describe('feature: live reload support', function() {
     afterEach(async function() {
-      await app.stopServer();
-      await removeConfig(app);
+      await testProject.stopEmberServer();
+      await removeConfig(testProject);
     });
 
     it('adds CSP directives required by live reload', async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         delivery: ['header', 'meta'],
       });
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
 
       let response = await request({
         url: 'http://localhost:49741',
@@ -177,18 +190,13 @@ describe('e2e: delivers CSP as configured', function() {
     });
 
     it('takes live reload configuration into account', async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         delivery: ['header', 'meta'],
       });
-      await app.startServer({
-        additionalArguments: [
-          '--live-reload-host',
-          'examples.com',
-          '--live-reload-port',
-          '49494',
-          '--port',
-          '49494'
-        ],
+      await testProject.startEmberServer({
+        liveReloadHost: 'examples.com',
+        liveReloadPort: '49494',
+        port: '49494',
       });
 
       let response = await request({
@@ -207,13 +215,15 @@ describe('e2e: delivers CSP as configured', function() {
     });
 
     it('inherits from default-src if connect-src and script-src are not present', async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         delivery: ['header', 'meta'],
         policy: {
           'default-src': ["'self'", "foo.com"],
         },
       });
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
 
       let response = await request({
         url: 'http://localhost:49741',

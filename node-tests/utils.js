@@ -1,31 +1,31 @@
-const fs = require('fs-extra');
-
+const CONFIG_PATH = 'config/content-security-policy.js';
 const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content="(.*)">/i;
 
-function getConfigPath(app) {
-  return app.filePath('config/content-security-policy.js');
-}
-
-async function setConfig(app, config) {
-  let file = getConfigPath(app);
+async function setConfig(testProject, config) {
   let content = `module.exports = function() { return ${JSON.stringify(config)}; }`;
 
-  await fs.writeFile(file, content);
+  await testProject.writeFile(CONFIG_PATH, content);
 }
 
-async function removeConfig(app) {
-  let file = getConfigPath(app);
-
-  if (!fs.existsSync(file)) {
-    return;
+async function removeConfig(testProject) {
+  try {
+    await testProject.deleteFile(CONFIG_PATH);
+  } catch (error) {
+    // should silently ignore if config file does not exist
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
   }
+}
 
-  await fs.remove(file);
+function extractRunTimeConfig(html) {
+  let encodedConfig = html.match(/<meta name="\S*\/config\/environment" content="(.*)" \/>/)[1];
+  return JSON.parse(decodeURIComponent(encodedConfig));
 }
 
 module.exports = {
   CSP_META_TAG_REG_EXP,
-  getConfigPath,
+  extractRunTimeConfig,
   removeConfig,
   setConfig,
 };

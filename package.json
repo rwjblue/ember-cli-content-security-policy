@@ -19,7 +19,7 @@
     "start": "ember serve",
     "test": "ember test",
     "test:all": "ember try:each",
-    "test:node": "for i in node-tests/*/*; do mocha $i; done"
+    "test:node": "mocha node-tests/**/*-test.js"
   },
   "dependencies": {
     "body-parser": "^1.17.0",
@@ -34,6 +34,7 @@
     "broccoli-asset-rev": "^3.0.0",
     "chai": "^4.2.0",
     "denodeify": "^1.2.1",
+    "ember-addon-tests": "^0.0.1",
     "ember-cli": "~3.16.1",
     "ember-cli-addon-tests": "^0.11.1",
     "ember-cli-dependency-checker": "^3.2.0",
@@ -55,6 +56,7 @@
     "ember-try": "^1.4.0",
     "eslint-plugin-ember": "^8.1.1",
     "eslint-plugin-node": "^11.0.0",
+    "execa": "^4.1.0",
     "fs-extra": "^9.0.0",
     "loader.js": "^4.7.0",
     "mocha": "^7.0.0",

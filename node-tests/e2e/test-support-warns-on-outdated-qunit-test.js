@@ -1,33 +1,27 @@
 const expect = require('chai').expect;
-const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
+const TestProject = require('ember-addon-tests').default;
+const path = require('path');
 
 describe('e2e: test support warns if dependencies are not supported', function() {
   this.timeout(300000);
 
   it('warns if QUnit version is to old', async function() {
-    let app = new AddonTestApp();
-
-    await app.create('outdated-qunit', {
-      noFixtures: true,
-      skipNpm: true,
+    let testProject = new TestProject({
+      projectRoot: path.join(__dirname, '../..'),
     });
 
-    app.editPackageJSON(pkg => {
-      // ember-qunit@4.0.0 depends on qunit@~2.7.1, which is less than required >= 2.9.2
-      pkg.devDependencies['ember-qunit'] = "4.0.0";
-    });
-
-    await app.run('npm', 'install');
+    await testProject.createEmberApp();
+    await testProject.addOwnPackageAsDevDependency('ember-cli-content-security-policy');
+    await testProject.addDevDependency('ember-qunit', '4.0.0');
 
     try {
       // throws cause QUnit 4.4.0 violates default CSP
-      await app.runEmberCommand('test');
+      await testProject.runEmberCommand('test');
 
       // expect runEmberCommand to throw
       expect(false).to.be.true;
-    } catch ({ output }) {
-      let warning = output.find((_) => _.startsWith('WARNING'));
-      expect(warning).to.include('QUnit < 2.9.2');
+    } catch ({ stdout }) {
+      expect(stdout).to.include('WARNING: QUnit < 2.9.2 violates a strict Content Security Policy (CSP) by itself.');
     }
   });
 });

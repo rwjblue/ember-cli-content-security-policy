@@ -1,34 +1,38 @@
 const expect = require('chai').expect;
-const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
+const TestProject = require('ember-addon-tests').default;
 const {
   removeConfig,
   setConfig
 } = require('../utils');
+const path = require('path');
 
 describe('e2e: CLI command csp-headers', function() {
   this.timeout(300000);
 
-  let app;
+  let testProject;
 
   before(async function() {
-    app = new AddonTestApp();
+    testProject = new TestProject({
+      projectRoot: path.join(__dirname, '../..')
+    });
 
-    await app.create('default', { noFixtures: true });
+    await testProject.createEmberApp();
+    await testProject.addOwnPackageAsDevDependency('ember-cli-content-security-policy');
   });
 
   afterEach(async function() {
-    await removeConfig(app);
+    await removeConfig(testProject);
   });
 
   it('returns CSP on stdout', async function() {
-    await setConfig(app, {
+    await setConfig(testProject, {
       policy: {
         'default-src': "'self'",
         'script-src': "'self' 'unsafe-inline'",
       },
     });
 
-    let { output } = await app.runEmberCommand('csp-headers', '--silent');
-    expect(output[0]).to.equal("default-src 'self'; script-src 'self' 'unsafe-inline';\n");
+    let { stdout } = await testProject.runEmberCommand('csp-headers', '--silent');
+    expect(stdout).to.equal("default-src 'self'; script-src 'self' 'unsafe-inline';");
   });
 });

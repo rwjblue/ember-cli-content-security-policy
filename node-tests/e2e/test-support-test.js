@@ -1,32 +1,44 @@
 const expect = require('chai').expect;
-const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
+const TestProject = require('ember-addon-tests').default;
 const fs = require('fs-extra');
 const denodeify = require('denodeify');
 const request = denodeify(require('request'));
 const {
   CSP_META_TAG_REG_EXP,
-  getConfigPath,
   removeConfig,
   setConfig
 } = require('../utils');
+const path = require('path');
 
 describe('e2e: provides test support', function() {
   this.timeout(300000);
 
-  let app;
+  let testProject;
 
   before(async function() {
-    app = new AddonTestApp();
+    testProject = new TestProject({
+      projectRoot: path.join(__dirname, '../..'),
+    });
 
-    await app.create('default', { noFixtures: true });
+    await testProject.createEmberApp();
+
+    // Ember Auto Import is a default dependency of new Ember projects. It uses an `eval` function
+    // internally unless configured to not do so. This violates the default CSP and causes an
+    // `EvalError` to be thrown. This uncatched error will cause the tests to fail - regardless
+    // of our custom test support.
+    // To avoid this issue we uninstall Ember Auto Import for these tests. This can be removed
+    // as soon as Ember CLI Content Security Policy works out of the box with Ember Auto Import.
+    await testProject.runCommand('yarn', 'remove', 'ember-auto-import');
+
+    await testProject.addOwnPackageAsDevDependency('ember-cli-content-security-policy');
 
     // create a simple rendering tests that violates default CSP by using
     // inline JavaScript
     let testFolder = 'tests/integration/components';
     let testFile = `${testFolder}/my-component-test.js`;
-    await fs.ensureDir(app.filePath(testFolder));
-    await fs.writeFile(
-      app.filePath(testFile),
+    await fs.ensureDir(`${testProject.path}/${testFolder}`);
+    await testProject.writeFile(
+      testFile,
       `
         import { module, test } from 'qunit';
         import { setupRenderingTest } from 'ember-qunit';
@@ -46,47 +58,49 @@ describe('e2e: provides test support', function() {
   });
 
   afterEach(async function() {
-    await removeConfig(app);
+    await removeConfig(testProject);
   });
 
   it('causes tests to fail on CSP violations', async function() {
     // runEmberCommand throws result object if command exists with non zero
     // exit code
     try {
-      await app.runEmberCommand('test');
+      await testProject.runEmberCommand('test');
 
       // expect runEmberCommand to throw
       expect(false).to.be.true;
-    } catch({ code }) {
-      expect(code).to.equal(1);
+    } catch({ exitCode }) {
+      expect(exitCode).to.equal(1);
     }
   });
 
   it('ensures CSP is applied in tests regradless if executed with development server or not', async function() {
-    await setConfig(app, {
+    await setConfig(testProject, {
       delivery: ['header'],
     });
 
-    await app.runEmberCommand('build');
+    await testProject.runEmberCommand('build');
 
-    let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
-    let indexHtml = await fs.readFile(app.filePath('dist/index.html'), 'utf8');
+    let testsIndexHtml = await testProject.readFile('dist/tests/index.html', 'utf8');
+    let indexHtml = await testProject.readFile('dist/index.html', 'utf8');
     expect(testsIndexHtml).to.match(CSP_META_TAG_REG_EXP);
     expect(indexHtml).to.not.match(CSP_META_TAG_REG_EXP);
   });
 
   describe('adds nonce to script-src if needed', function() {
     afterEach(async function() {
-      await removeConfig(app);
-      await app.stopServer();
+      await removeConfig(testProject);
+      await testProject.stopEmberServer();
     });
 
     it('adds nonce to script-src when required by tests', async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         delivery: ['meta'],
       });
 
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
 
       let response = await request({
         url: 'http://localhost:49741/tests/',
@@ -103,14 +117,16 @@ describe('e2e: provides test support', function() {
     });
 
     it('does not add nonce to script-src if directive contains \'unsafe-inline\'', async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         delivery: ['meta'],
         policy: {
           'script-src': ["'self'", "'unsafe-inline'"]
         }
       });
 
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
 
       let response = await request({
         url: 'http://localhost:49741/tests/',
@@ -142,18 +158,20 @@ describe('e2e: provides test support', function() {
           };
         };
       `;
-      await fs.writeFile(getConfigPath(app), configuration);
+      await testProject.writeFile('config/content-security-policy.js', configuration);
 
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
     });
 
     after(async function() {
-      await app.stopServer();
+      await testProject.stopEmberServer();
     });
 
     it('uses CSP configuration for test environment for meta tag in tests/index.html', async function() {
-      let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
-      let indexHtml = await fs.readFile(app.filePath('dist/index.html'), 'utf8');
+      let testsIndexHtml = await testProject.readFile('dist/tests/index.html', 'utf8');
+      let indexHtml = await testProject.readFile('dist/index.html', 'utf8');
 
       let [,cspInTestsIndexHtml] = testsIndexHtml.match(CSP_META_TAG_REG_EXP);
       let [,cspInIndexHtml] = indexHtml.match(CSP_META_TAG_REG_EXP);
@@ -186,22 +204,24 @@ describe('e2e: provides test support', function() {
 
   describe('includes frame-src required by testem', function() {
     before(async function() {
-      await setConfig(app, {
+      await setConfig(testProject, {
         delivery: ['header', 'meta'],
         reportOnly: false,
       });
 
-      await app.startServer();
+      await testProject.startEmberServer({
+        port: '49741',
+      });
     });
 
     after(async function() {
-      await app.stopServer();
+      await testProject.stopEmberServer();
 
-      await removeConfig(app);
+      await removeConfig(testProject);
     });
 
     it('includes frame-src required by testem in CSP delivered by meta tag', async function() {
-      let testsIndexHtml = await fs.readFile(app.filePath('dist/tests/index.html'), 'utf8');
+      let testsIndexHtml = await testProject.readFile('dist/tests/index.html', 'utf8');
       let [,cspInTestsIndexHtml] = testsIndexHtml.match(CSP_META_TAG_REG_EXP);
 
       expect(cspInTestsIndexHtml).to.include("frame-src 'self';");
@@ -221,29 +241,32 @@ describe('e2e: provides test support', function() {
   });
 
   it('does not cause tests failures if addon is disabled', async function() {
-    await setConfig(app, {
+    await setConfig(testProject, {
       enabled: false,
     });
-    let { code } = await app.runEmberCommand('test');
+    let { exitCode } = await testProject.runEmberCommand('test');
 
-    expect(code).to.equal(0);
+    expect(exitCode).to.equal(0);
   });
 
   it('does not cause tests failures if `failTests` config option is `false`', async function() {
-    await setConfig(app, {
+    await setConfig(testProject, {
       failTests: false,
     });
-    let { code } = await app.runEmberCommand('test');
 
-    expect(code).to.equal(0);
+    let { exitCode } = await testProject.runEmberCommand('test');
+
+    expect(exitCode).to.equal(0);
   });
 
   // One common scenario is when running the server in production mode locally, i.e.
   // you are doing the production build on your local machine, connecting to your actual production server,
   // for example via `ember serve -prod`. In these cases we don't want this addon to break.
   it('does not break development server for builds not including tests', async function() {
-    await app.startServer({
-      additionalArguments: ['-prod']
+    // TODO: not supported yet
+    await testProject.startEmberServer({
+      environment: 'prodocution',
+      port: '49741',
     });
 
     let response = await request({
@@ -262,6 +285,6 @@ describe('e2e: provides test support', function() {
     expect(response.statusCode).to.equal(200);
     expect(responseForTests.statusCode).to.equal(200);
 
-    await app.stopServer();
+    await testProject.stopEmberServer();
   });
 });
