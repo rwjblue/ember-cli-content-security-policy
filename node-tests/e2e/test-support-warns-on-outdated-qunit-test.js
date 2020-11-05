@@ -20,8 +20,9 @@ describe('e2e: test support warns if dependencies are not supported', function()
 
       // expect runEmberCommand to throw
       expect(false).to.be.true;
-    } catch ({ stdout }) {
-      expect(stdout).to.include('WARNING: QUnit < 2.9.2 violates a strict Content Security Policy (CSP) by itself.');
+    } catch (error) {
+      console.log(error);
+      expect(error.stdout).to.include('WARNING: QUnit < 2.9.2 violates a strict Content Security Policy (CSP) by itself.');
     }
   });
 });
