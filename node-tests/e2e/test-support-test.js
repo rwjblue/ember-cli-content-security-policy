@@ -28,7 +28,12 @@ describe('e2e: provides test support', function() {
     // of our custom test support.
     // To avoid this issue we uninstall Ember Auto Import for these tests. This can be removed
     // as soon as Ember CLI Content Security Policy works out of the box with Ember Auto Import.
-    await testProject.runCommand('yarn', 'remove', 'ember-auto-import');
+    try {
+      await testProject.runCommand('yarn', 'remove', 'ember-auto-import');
+    } catch(error) {
+      // Trying to remove ember-auto-import dependency may fail cause that dependency is not
+      // present for older Ember CLI versions.
+    }
 
     await testProject.addOwnPackageAsDevDependency('ember-cli-content-security-policy');
 
