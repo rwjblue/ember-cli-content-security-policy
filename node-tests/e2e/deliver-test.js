@@ -246,5 +246,33 @@ describe('e2e: delivers CSP as configured', function() {
         expect(csp).to.match(/script-src[^;]* localhost:49741/);
       });
     });
+
+    it("removes existing 'none' keyword from connect-src", async function() {
+      await setConfig(testProject, {
+        delivery: ['header', 'meta'],
+        policy: {
+          'default-src': ["'self'"],
+          'connect-src': ["'none'"],
+        },
+      });
+      await testProject.startEmberServer({
+        port: '49741',
+      });
+
+      let response = await request({
+        url: 'http://localhost:49741',
+        headers: {
+          'Accept': 'text/html'
+        }
+      });
+
+      let cspInHeader = response.headers['content-security-policy-report-only'];
+      let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
+      [cspInHeader, cspInMetaElement].forEach((csp) => {
+        expect(csp).to.not.match(/connect-src[^;]* 'none'/);
+        expect(csp).to.match(/connect-src[^;]* ws:\/\/0.0.0.0:49741/);
+        expect(csp).to.match(/connect-src[^;]* ws:\/\/localhost:49741/);
+      });
+    });
   });
 });
