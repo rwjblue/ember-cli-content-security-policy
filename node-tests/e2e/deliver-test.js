@@ -8,7 +8,6 @@ const {
   setConfig
 } = require('../utils');
 const path = require('path');
-const { exception } = require('console');
 
 describe('e2e: delivers CSP as configured', function() {
   this.timeout(300000);
