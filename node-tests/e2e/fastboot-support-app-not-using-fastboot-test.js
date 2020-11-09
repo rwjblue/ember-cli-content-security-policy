@@ -1,38 +1,29 @@
 const expect = require('chai').expect;
-const AddonTestApp = require('ember-cli-addon-tests').AddonTestApp;
+const TestProject = require('ember-addon-tests').default;
 const denodeify = require('denodeify');
 const request = denodeify(require('request'));
-
-function getRunTimeConfig(html) {
-  let encodedConfig = html.match(/<meta name="default\/config\/environment" content="(.*)" \/>/)[1];
-  return JSON.parse(decodeURIComponent(encodedConfig));
-}
+const path = require('path');
+const { extractRunTimeConfig } = require('../utils');
 
 describe('e2e: fastboot integration if consumer does not use FastBoot', function() {
   this.timeout(300000);
 
-  let app;
+  let testProject;
 
   before(async function() {
-    app = new AddonTestApp();
-
-    await app.create('default', {
-      noFixtures: true,
-      skipNpm: true,
+    testProject = new TestProject({
+      projectRoot: path.join(__dirname, '../..')
     });
 
-    await app.editPackageJSON(pkg => {
-      delete pkg.devDependencies['ember-cli-fastboot'];
-      delete pkg.devDependencies['fastboot-app-server'];
+    await testProject.createEmberApp();
+    await testProject.addOwnPackageAsDevDependency('ember-cli-content-security-policy');
+    await testProject.startEmberServer({
+      port: '49741',
     });
-
-    await app.run('npm', 'install');
-
-    await app.startServer();
   });
 
   after(async function() {
-    await app.stopServer();
+    await testProject.stopEmberServer();
   });
 
   it('does not push run-time configuration into app if app does not use FastBoot', async function() {
@@ -45,7 +36,7 @@ describe('e2e: fastboot integration if consumer does not use FastBoot', function
 
     expect(response.statusCode).to.equal(200);
 
-    let runTimeConfig = getRunTimeConfig(response.body);
+    let runTimeConfig = extractRunTimeConfig(response.body);
     expect(runTimeConfig).to.not.include.key('ember-cli-content-security-policy');
   });
 });

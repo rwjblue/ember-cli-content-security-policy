@@ -105,7 +105,7 @@ module.exports = {
     // - application has ember-cli-fastboot dependency.
     this._needsFastBootSupport = this._config.enabled &&
       this._config.delivery.includes('header') &&
-      new VersionChecker(this.project).for('ember-cli-fastboot').exists();
+      this.project.findAddonByName('ember-cli-fastboot') !== null;
 
     // Run-time configuration is only needed for FastBoot support.
     if (!this._needsFastBootSupport) {

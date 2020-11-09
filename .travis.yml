@@ -5,8 +5,7 @@ node_js:
   # so that your addon works for all apps
   - "10"
 
-sudo: false
-dist: trusty
+dist: xenial
 
 addons:
   chrome: stable
@@ -44,6 +43,8 @@ jobs:
       env: EMBER_CLI_VERSION=~3.4.0
     - env: EMBER_CLI_VERSION=~3.8.0
     - env: EMBER_CLI_VERSION=~3.12.0
+    - env: EMBER_CLI_VERSION=~3.16.0
+    - env: EMBER_CLI_VERSION=~3.20.0
     - env: EMBER_CLI_VERSION=latest
     - env: EMBER_CLI_VERSION=beta
 
