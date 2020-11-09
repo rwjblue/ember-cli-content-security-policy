@@ -27,4 +27,13 @@ describe('unit: appendSourceList', function() {
     expect(sourceList['script-src']).to.contain('examples.com');
     expect(sourceList['default-src']).to.deep.equal(["'self'"]);
   });
+
+  it("removes existing 'none' keyword", function() {
+    let sourceList = {
+      'script-src': ["'none'"],
+    };
+
+    appendSourceList(sourceList, 'script-src', 'examples.com');
+    expect(sourceList['script-src']).to.deep.equal(['examples.com']);
+  });
 });
