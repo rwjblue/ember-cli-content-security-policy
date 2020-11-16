@@ -116,8 +116,8 @@ module.exports = function(environment) {
       'script-src':  ["'self'", "https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js"],
       // Allow fonts to be loaded from http://fonts.gstatic.com
       'font-src': ["'self'", "http://fonts.gstatic.com"],
-      // Allow data (xhr/websocket) from api.mixpanel.com and custom-api.local
-      'connect-src': ["'self'", "https://api.mixpanel.com", "https://custom-api.local"],
+      // Allow data (xhr/websocket) from api-js.mixpanel.com and custom-api.local
+      'connect-src': ["'self'", "https://api-js.mixpanel.com", "https://custom-api.local"],
       // Allow images from the origin itself (i.e. current domain)
       'img-src': ["'self'"],
       // Allow CSS loaded from https://fonts.googleapis.com
