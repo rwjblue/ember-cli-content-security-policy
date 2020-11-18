@@ -7,17 +7,17 @@ const {
   buildPolicyString,
   calculateConfig,
   isIndexHtmlForTesting,
-  readConfig
+  readConfig,
 } = require('./lib/utils');
 
-const REPORT_PATH     = '/csp-report';
+const REPORT_PATH = '/csp-report';
 
-const CSP_HEADER              = 'Content-Security-Policy';
-const CSP_HEADER_REPORT_ONLY  = 'Content-Security-Policy-Report-Only';
+const CSP_HEADER = 'Content-Security-Policy';
+const CSP_HEADER_REPORT_ONLY = 'Content-Security-Policy-Report-Only';
 
-const CSP_REPORT_URI          = 'report-uri';
-const CSP_FRAME_ANCESTORS     = 'frame-ancestors';
-const CSP_SANDBOX             = 'sandbox';
+const CSP_REPORT_URI = 'report-uri';
+const CSP_FRAME_ANCESTORS = 'frame-ancestors';
+const CSP_SANDBOX = 'sandbox';
 
 const META_UNSUPPORTED_DIRECTIVES = [
   CSP_REPORT_URI,
@@ -27,23 +27,25 @@ const META_UNSUPPORTED_DIRECTIVES = [
 
 const STATIC_TEST_NONCE = 'abcdefg';
 
-let unsupportedDirectives = function(policyObject) {
-  return META_UNSUPPORTED_DIRECTIVES.filter(function(name) {
-    return policyObject && (name in policyObject);
+let unsupportedDirectives = function (policyObject) {
+  return META_UNSUPPORTED_DIRECTIVES.filter(function (name) {
+    return policyObject && name in policyObject;
   });
 };
 
 // appends directives needed for Ember CLI live reload feature to policy object
-let allowLiveReload = function(policyObject, liveReloadConfig) {
+let allowLiveReload = function (policyObject, liveReloadConfig) {
   let { hostname, port, ssl } = liveReloadConfig;
 
-  ['localhost', '0.0.0.0', hostname].filter(Boolean).forEach(function(hostname) {
-    let protocol = ssl ? 'wss://' : 'ws://';
-    let host = hostname + ':' + port;
-    appendSourceList(policyObject, 'connect-src', protocol + host);
-    appendSourceList(policyObject, 'script-src', host);
-  });
-}
+  ['localhost', '0.0.0.0', hostname]
+    .filter(Boolean)
+    .forEach(function (hostname) {
+      let protocol = ssl ? 'wss://' : 'ws://';
+      let host = hostname + ':' + port;
+      appendSourceList(policyObject, 'connect-src', protocol + host);
+      appendSourceList(policyObject, 'script-src', host);
+    });
+};
 
 module.exports = {
   name: require('./package').name,
@@ -64,7 +66,7 @@ module.exports = {
   // Only a small subset of the configuration is required at run time in order to support
   // FastBoot. This one is returned here as default configuration in order to make it
   // available at run time.
-  config: function(environment, runConfig) {
+  config: function (environment, runConfig) {
     // calculate configuration and policy string
     // hook may be called more than once, but we only need to calculate once
     if (!this._config) {
@@ -81,14 +83,23 @@ module.exports = {
       if (app && app.tests) {
         let ownConfigForTest = readConfig(project, 'test');
         let runConfigForTest = project.config('test');
-        let configForTest = calculateConfig('test', ownConfigForTest, runConfigForTest, ui);
+        let configForTest = calculateConfig(
+          'test',
+          ownConfigForTest,
+          runConfigForTest,
+          ui
+        );
 
         // add static nonce required for tests, but only if if script-src
         // does not contain 'unsafe-inline'. if a nonce is present, browsers
         // ignore the 'unsafe-inline' directive.
         let scriptSrc = configForTest.policy['script-src'];
         if (!(scriptSrc && scriptSrc.includes("'unsafe-inline'"))) {
-          appendSourceList(configForTest.policy, 'script-src', `'nonce-${STATIC_TEST_NONCE}'`);
+          appendSourceList(
+            configForTest.policy,
+            'script-src',
+            `'nonce-${STATIC_TEST_NONCE}'`
+          );
         }
 
         // testem requires frame-src to run
@@ -103,7 +114,8 @@ module.exports = {
     // - addon is enabled and
     // - configured to deliver CSP via header and
     // - application has ember-cli-fastboot dependency.
-    this._needsFastBootSupport = this._config.enabled &&
+    this._needsFastBootSupport =
+      this._config.enabled &&
       this._config.delivery.includes('header') &&
       this.project.findAddonByName('ember-cli-fastboot') !== null;
 
@@ -123,7 +135,7 @@ module.exports = {
     };
   },
 
-  serverMiddleware: function({ app: expressApp, options }) {
+  serverMiddleware: function ({ app: expressApp, options }) {
     // Configuration is not changeable at run-time. Therefore it's safe to not
     // register the express middleware at all if addon is disabled and
     // precalculate dynamic values.
@@ -139,21 +151,23 @@ module.exports = {
     // Policy object for tests is only calculated if build includes tests
     // (`app.tests === true`). If it hasn't been calculated at all, there
     // is no need to recalculate it.
-    let policyObjectForTest = this._configForTest ? this._configForTest.policy : null;
+    let policyObjectForTest = this._configForTest
+      ? this._configForTest.policy
+      : null;
 
     // live reload requires some addition CSP directives
     if (options.liveReload) {
       allowLiveReload(policyObject, {
         hostname: options.liveReloadHost,
         port: options.liveReloadPort,
-        ssl: options.ssl
+        ssl: options.ssl,
       });
 
       if (policyObjectForTest) {
         allowLiveReload(policyObjectForTest, {
           hostname: options.liveReloadHost,
           port: options.liveReloadPort,
-          ssl: options.ssl
+          ssl: options.ssl,
         });
       }
     }
@@ -184,9 +198,12 @@ module.exports = {
       // 1. the request is for tests and
       // 2. the build include tests
       let buildIncludeTests = this.app.tests;
-      let isRequestForTests = req.originalUrl.startsWith('/tests') && buildIncludeTests;
+      let isRequestForTests =
+        req.originalUrl.startsWith('/tests') && buildIncludeTests;
       let config = isRequestForTests ? this._configForTest : this._config;
-      let policyString = isRequestForTests ? this._policyStringForTest : this._policyString;
+      let policyString = isRequestForTests
+        ? this._policyStringForTest
+        : this._policyString;
       let header = config.reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
 
       // clear existing headers before setting ours
@@ -201,17 +218,24 @@ module.exports = {
 
     // register handler for CSP reports
     let bodyParser = require('body-parser');
-    expressApp.use(REPORT_PATH, bodyParser.json({ type: 'application/csp-report' }));
+    expressApp.use(
+      REPORT_PATH,
+      bodyParser.json({ type: 'application/csp-report' })
+    );
     expressApp.use(REPORT_PATH, bodyParser.json({ type: 'application/json' }));
-    expressApp.use(REPORT_PATH, function(req, res) {
+    expressApp.use(REPORT_PATH, function (req, res) {
       // eslint-disable-next-line no-console
-      console.log(chalk.red('Content Security Policy violation:') + '\n\n' + JSON.stringify(req.body, null, 2));
+      console.log(
+        chalk.red('Content Security Policy violation:') +
+          '\n\n' +
+          JSON.stringify(req.body, null, 2)
+      );
       // send empty ok response, to avoid Cross-Origin Resource Blocking (CORB) warning
       res.status(204).send();
     });
   },
 
-  contentFor: function(type, appConfig, existingContent) {
+  contentFor: function (type, appConfig, existingContent) {
     if (!this._config.enabled) {
       return;
     }
@@ -219,7 +243,7 @@ module.exports = {
     // inject CSP meta tag
     if (
       // if addon is configured to deliver CSP by meta tag
-      ( type === 'head' && this._config.delivery.indexOf('meta') !== -1 ) ||
+      (type === 'head' && this._config.delivery.indexOf('meta') !== -1) ||
       // ensure it's injected in tests/index.html to ensure consistent test results
       type === 'test-head'
     ) {
@@ -229,20 +253,27 @@ module.exports = {
       }
 
       let config = type === 'head' ? this._config : this._configForTest;
-      let policyString = type === 'head' ? this._policyString : this._policyStringForTest;
+      let policyString =
+        type === 'head' ? this._policyString : this._policyStringForTest;
 
-      if (this._config.reportOnly && this._config.delivery.indexOf('meta') !== -1) {
+      if (
+        this._config.reportOnly &&
+        this._config.delivery.indexOf('meta') !== -1
+      ) {
         this.ui.writeWarnLine(
           'Content Security Policy does not support report only mode if delivered via meta element. ' +
-          "Either set `reportOnly` to `false` or remove `'meta' from `delivery` in " +
-          '`config/content-security-policy.js`.',
+            "Either set `reportOnly` to `false` or remove `'meta' from `delivery` in " +
+            '`config/content-security-policy.js`.',
           config.reportOnly
         );
       }
 
-      unsupportedDirectives(config.policy).forEach(function(name) {
-        let msg = 'CSP delivered via meta does not support `' + name + '`, ' +
-                  'per the W3C recommendation.';
+      unsupportedDirectives(config.policy).forEach(function (name) {
+        let msg =
+          'CSP delivered via meta does not support `' +
+          name +
+          '`, ' +
+          'per the W3C recommendation.';
         console.log(chalk.yellow(msg)); // eslint-disable-line no-console
       });
 
@@ -251,14 +282,14 @@ module.exports = {
 
     // inject event listener needed for test support
     if (type === 'test-body' && this._config.failTests) {
-      let qunitDependency = (new VersionChecker(this.project)).for('qunit');
+      let qunitDependency = new VersionChecker(this.project).for('qunit');
       if (qunitDependency.exists() && qunitDependency.lt('2.9.2')) {
         this.ui.writeWarnLine(
           'QUnit < 2.9.2 violates a strict Content Security Policy (CSP) by itself. ' +
-          `You are using QUnit ${qunitDependency.version}. You should upgrade the ` +
-          'dependency to avoid issues.\n' +
-          'Your project might not depend directly on QUnit but on ember-qunit. ' +
-          'In that case you might want to upgrade ember-qunit to > 4.4.1.'
+            `You are using QUnit ${qunitDependency.version}. You should upgrade the ` +
+            'dependency to avoid issues.\n' +
+            'Your project might not depend directly on QUnit but on ember-qunit. ' +
+            'In that case you might want to upgrade ember-qunit to > 4.4.1.'
         );
       }
 
@@ -278,18 +309,25 @@ module.exports = {
     // Add nonce to <script> tag inserted by Ember CLI to assert that test file was loaded.
     if (type === 'test-body-footer') {
       existingContent.forEach((entry, index) => {
-        if (/<script>\s*Ember.assert\(.*EmberENV.TESTS_FILE_LOADED\);\s*<\/script>/.test(entry)) {
-          existingContent[index] = entry.replace('<script>', '<script nonce="' + STATIC_TEST_NONCE + '">');
+        if (
+          /<script>\s*Ember.assert\(.*EmberENV.TESTS_FILE_LOADED\);\s*<\/script>/.test(
+            entry
+          )
+        ) {
+          existingContent[index] = entry.replace(
+            '<script>',
+            '<script nonce="' + STATIC_TEST_NONCE + '">'
+          );
         }
       });
     }
   },
 
-  includedCommands: function() {
+  includedCommands: function () {
     return require('./lib/commands');
   },
 
-  treeForFastBoot: function(tree) {
+  treeForFastBoot: function (tree) {
     // Instance initializer should only be included in build if required.
     // It's only required for FastBoot support.
     if (!this._needsFastBootSupport) {

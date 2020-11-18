@@ -3,15 +3,11 @@ const TestProject = require('ember-addon-tests').default;
 const fs = require('fs-extra');
 const denodeify = require('denodeify');
 const request = denodeify(require('request'));
-const {
-  extractRunTimeConfig,
-  removeConfig,
-  setConfig
-} = require('../utils');
+const { extractRunTimeConfig, removeConfig, setConfig } = require('../utils');
 const path = require('path');
 const execa = require('execa');
 
-describe('e2e: fastboot integration', function() {
+describe('e2e: fastboot integration', function () {
   this.timeout(300000);
 
   let testProject;
@@ -23,7 +19,10 @@ describe('e2e: fastboot integration', function() {
     // start fastboot app server in child proces
     // can't use testProject.runCommand() cause that does not allow setting `{ all: true }`
     // option, which is required for reading output as a stream.
-    serverProcess = execa('node', [server], { all: true, cwd: testProject.path });
+    serverProcess = execa('node', [server], {
+      all: true,
+      cwd: testProject.path,
+    });
 
     // detect start of fastboot app server
     return new Promise((resolve, reject) => {
@@ -57,19 +56,22 @@ describe('e2e: fastboot integration', function() {
     }
   }
 
-  before(async function() {
+  before(async function () {
     testProject = new TestProject({
-      projectRoot: path.join(__dirname, '../..')
+      projectRoot: path.join(__dirname, '../..'),
     });
 
     await testProject.createEmberApp();
-    await testProject.addOwnPackageAsDevDependency('ember-cli-content-security-policy');
+    await testProject.addOwnPackageAsDevDependency(
+      'ember-cli-content-security-policy'
+    );
     await testProject.addDevDependency('ember-cli-fastboot');
     await testProject.addDevDependency('fastboot-app-server');
 
     // Quick Start instructions of FastBoot App Server
     // https://github.com/ember-fastboot/fastboot-app-server
-    await testProject.writeFile('server.js',
+    await testProject.writeFile(
+      'server.js',
       `
         const FastBootAppServer = require('fastboot-app-server');
 
@@ -83,133 +85,148 @@ describe('e2e: fastboot integration', function() {
     );
   });
 
-  describe('scenario: default', function() {
-    before(async function() {
+  describe('scenario: default', function () {
+    before(async function () {
       await testProject.runEmberCommand('build');
       await startServer();
     });
 
-    after(async function() {
+    after(async function () {
       await stopServer();
       await removeConfig(testProject);
     });
 
-    it('sets CSP header if served via FastBoot', async function() {
+    it('sets CSP header if served via FastBoot', async function () {
       let response = await request({
         url: 'http://localhost:49742',
         headers: {
-          'Accept': 'text/html'
+          Accept: 'text/html',
         },
       });
 
-      expect(response.headers).to.include.key('content-security-policy-report-only');
+      expect(response.headers).to.include.key(
+        'content-security-policy-report-only'
+      );
     });
   });
 
-  describe('scenario: disabled', function() {
-    before(async function() {
+  describe('scenario: disabled', function () {
+    before(async function () {
       await setConfig(testProject, { enabled: false });
       await testProject.runEmberCommand('build');
       await startServer();
     });
 
-    after(async function() {
+    after(async function () {
       await stopServer();
       await removeConfig(testProject);
     });
 
-    it('does not set CSP header if disabled', async function() {
+    it('does not set CSP header if disabled', async function () {
       let response = await request({
         url: 'http://localhost:49742',
         headers: {
-          'Accept': 'text/html'
+          Accept: 'text/html',
         },
       });
 
       expect(response.statusCode).to.equal(200);
-      expect(response.headers).to.not.include.key('content-security-policy-report-only');
+      expect(response.headers).to.not.include.key(
+        'content-security-policy-report-only'
+      );
     });
 
-    it('does not push run-time configuration into app if disabled', async function() {
+    it('does not push run-time configuration into app if disabled', async function () {
       let response = await request({
         url: 'http://localhost:49742',
         headers: {
-          'Accept': 'text/html'
+          Accept: 'text/html',
         },
       });
 
       let runTimeConfig = extractRunTimeConfig(response.body);
       expect(response.statusCode).to.equal(200);
-      expect(runTimeConfig).to.not.include.key('ember-cli-content-security-policy');
+      expect(runTimeConfig).to.not.include.key(
+        'ember-cli-content-security-policy'
+      );
     });
 
-    it('does not push instance initializer into app if disabled', async function() {
+    it('does not push instance initializer into app if disabled', async function () {
       let response = await request({
         url: 'http://localhost:49742/assets/vendor.js',
         headers: {
-          'Accept': 'application/javascript'
+          Accept: 'application/javascript',
         },
       });
 
       expect(response.statusCode).to.equal(200);
-      expect(response.body).to.not.include('instance-initializers/content-security-policy');
+      expect(response.body).to.not.include(
+        'instance-initializers/content-security-policy'
+      );
     });
   });
 
-  describe('scenario: delivery does not include header', function() {
-    before(async function() {
+  describe('scenario: delivery does not include header', function () {
+    before(async function () {
       await setConfig(testProject, { delivery: ['meta'] });
       await testProject.runEmberCommand('build');
       await startServer();
     });
 
-    after(async function() {
+    after(async function () {
       await stopServer();
       await removeConfig(testProject);
     });
 
-    it('does not set CSP header if delivery does not include header', async function() {
+    it('does not set CSP header if delivery does not include header', async function () {
       let response = await request({
         url: 'http://localhost:49742',
         headers: {
-          'Accept': 'text/html'
+          Accept: 'text/html',
         },
       });
 
       expect(response.statusCode).to.equal(200);
-      expect(response.headers).to.not.include.key('content-security-policy-report-only');
+      expect(response.headers).to.not.include.key(
+        'content-security-policy-report-only'
+      );
     });
 
-    it('does not push run-time configuration into app if delivery does not include header', async function() {
+    it('does not push run-time configuration into app if delivery does not include header', async function () {
       let response = await request({
         url: 'http://localhost:49742',
         headers: {
-          'Accept': 'text/html'
+          Accept: 'text/html',
         },
       });
 
       let runTimeConfig = extractRunTimeConfig(response.body);
       expect(response.statusCode).to.equal(200);
-      expect(runTimeConfig).to.not.include.key('ember-cli-content-security-policy');
+      expect(runTimeConfig).to.not.include.key(
+        'ember-cli-content-security-policy'
+      );
     });
 
-    it('does not push instance initializer into app if disabled', async function() {
+    it('does not push instance initializer into app if disabled', async function () {
       let response = await request({
         url: 'http://localhost:49742/assets/vendor.js',
         headers: {
-          'Accept': 'application/javascript'
+          Accept: 'application/javascript',
         },
       });
 
       expect(response.statusCode).to.equal(200);
-      expect(response.body).to.not.include('instance-initializers/content-security-policy');
+      expect(response.body).to.not.include(
+        'instance-initializers/content-security-policy'
+      );
     });
   });
 
-  describe('scenario: CSP header already defined', function() {
-    before(async function() {
+  describe('scenario: CSP header already defined', function () {
+    before(async function () {
       // FastBoot App Server that sets a CSP header
-      await fs.writeFile(path.join(testProject.path, 'server-with-csp.js'),
+      await fs.writeFile(
+        path.join(testProject.path, 'server-with-csp.js'),
         `
           const FastBootAppServer = require('fastboot-app-server');
           const ExpressHTTPServer = require('fastboot-app-server/src/express-http-server');
@@ -237,16 +254,16 @@ describe('e2e: fastboot integration', function() {
       await startServer('server-with-csp.js');
     });
 
-    after(async function() {
+    after(async function () {
       await stopServer();
       await removeConfig(testProject);
     });
 
-    it('does not override existing CSP header if served via FastBoot', async function() {
+    it('does not override existing CSP header if served via FastBoot', async function () {
       let response = await request({
         url: 'http://localhost:49742',
         headers: {
-          'Accept': 'text/html'
+          Accept: 'text/html',
         },
       });
       expect(response.headers).to.include.key('content-security-policy');
@@ -268,7 +285,9 @@ describe('e2e: fastboot integration', function() {
         "default-src 'http://examples.com';, default-src 'http://examples.com';",
       ]);
 
-      expect(response.headers).to.not.include.key('content-security-policy-report-only');
+      expect(response.headers).to.not.include.key(
+        'content-security-policy-report-only'
+      );
     });
-  })
+  });
 });

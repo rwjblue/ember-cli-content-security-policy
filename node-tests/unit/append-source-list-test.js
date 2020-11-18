@@ -1,8 +1,8 @@
 const expect = require('chai').expect;
 const { appendSourceList } = require('../../lib/utils');
 
-describe('unit: appendSourceList', function() {
-  it('appends to existing directive', function() {
+describe('unit: appendSourceList', function () {
+  it('appends to existing directive', function () {
     let sourceList = {
       'default-src': ["'none'"],
       'script-src': ["'self'"],
@@ -15,9 +15,9 @@ describe('unit: appendSourceList', function() {
     expect(sourceList['script-src']).to.contain('examples.com');
   });
 
-  it('initalizes a not yet defined directive with default-src', function() {
+  it('initalizes a not yet defined directive with default-src', function () {
     let sourceList = {
-      'default-src': ["'self'"]
+      'default-src': ["'self'"],
     };
 
     appendSourceList(sourceList, 'script-src', 'examples.com');
@@ -28,7 +28,7 @@ describe('unit: appendSourceList', function() {
     expect(sourceList['default-src']).to.deep.equal(["'self'"]);
   });
 
-  it("removes existing 'none' keyword", function() {
+  it("removes existing 'none' keyword", function () {
     let sourceList = {
       'script-src': ["'none'"],
     };

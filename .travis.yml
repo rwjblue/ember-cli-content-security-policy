@@ -3,7 +3,7 @@ language: node_js
 node_js:
   # we recommend testing addons with the same minimum supported node version as Ember CLI
   # so that your addon works for all apps
-  - "10"
+  - '10'
 
 dist: xenial
 
@@ -29,8 +29,8 @@ jobs:
 
   include:
     # runs linting and tests with current locked deps
-    - stage: "Tests"
-      name: "Tests"
+    - stage: 'Tests'
+      name: 'Tests'
       script:
         - yarn lint:hbs
         - yarn lint:js
@@ -39,7 +39,7 @@ jobs:
 
     # run additional tests against LTS versions of Ember CLI,
     # latest stable release and current beta
-    - stage: "Additional Tests"
+    - stage: 'Additional Tests'
       env: EMBER_CLI_VERSION=~3.4.0
     - env: EMBER_CLI_VERSION=~3.8.0
     - env: EMBER_CLI_VERSION=~3.12.0

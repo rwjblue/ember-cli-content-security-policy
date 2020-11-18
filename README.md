@@ -8,49 +8,70 @@ If configured to deliver the CSP using the meta tag no additional configuration 
 
 In any case, using this addon helps keeping CSP in the forefront of your thoughts while developing an Ember application.
 
-Compatibility
-------------------------------------------------------------------------------
+## Compatibility
 
-* Ember.js v2.18 or above
-* Ember CLI v3.4 or above
-* Node.js v10 or above
+- Ember.js v2.18 or above
+- Ember CLI v3.4 or above
+- Node.js v10 or above
 
-Installation
-------------------------------------------------------------------------------
+## Installation
 
 ```bash
 ember install ember-cli-content-security-policy
 ```
 
-Configuration
-------------------------------------------------------------------------------
+## Configuration
 
 This addon is configured via `config/content-security-policy.js` file.
 
 ```ts
 type directiveName =
   // Fetch Directives
-  'child-src' | 'connect-src' | 'default-src' | 'font-src' | 'frame-src' | 'image-src' | 'manifest-src' | 'media-src' | 'object-src' | 'prefetch-src' | 'script-src' | 'script-src-elem' | 'script-src-attr' | 'style-src' | 'style-src-elem' | 'style-src-attr' | 'worker-src' |
+  | 'child-src'
+  | 'connect-src'
+  | 'default-src'
+  | 'font-src'
+  | 'frame-src'
+  | 'image-src'
+  | 'manifest-src'
+  | 'media-src'
+  | 'object-src'
+  | 'prefetch-src'
+  | 'script-src'
+  | 'script-src-elem'
+  | 'script-src-attr'
+  | 'style-src'
+  | 'style-src-elem'
+  | 'style-src-attr'
+  | 'worker-src'
   // Document Directives
-  'base-uri' | 'plugin-types' | 'sandbox' |
+  | 'base-uri'
+  | 'plugin-types'
+  | 'sandbox'
   // Navigation Directives
-  'form-action' | 'form-ancestors' | 'navigate-to' |
+  | 'form-action'
+  | 'form-ancestors'
+  | 'navigate-to'
   // Reporting Directives
-  'report-uri' | 'report-uri' | 'report-to' |
+  | 'report-uri'
+  | 'report-uri'
+  | 'report-to'
   // Directives Defined in Other Documents
-  'block-all-mixed-content' | 'upgrade-insecure-requests' | 'require-sri-for';
+  | 'block-all-mixed-content'
+  | 'upgrade-insecure-requests'
+  | 'require-sri-for';
 
 interface EmberCLIContentSecurityPolicyConfig {
   // CSP is delivered via HTTP Header if delivery includes `"header"` and via
   // meta element if it includes `"meta"`.
-  delivery?: string,
+  delivery?: string;
 
   // Controls if addon is enabled at all.
-  enabled?: boolean,
+  enabled?: boolean;
 
   // Controls if addon causes tests to fail if they violate configured CSP
   // policy.
-  failTests: true,
+  failTests: true;
 
   // A hash of options representing a Content Security Policy. The key must be
   // a CSP directive name as defined by spec. The value must be an array of
@@ -61,13 +82,13 @@ interface EmberCLIContentSecurityPolicyConfig {
   // }
   // Please refer to CSP specification for details on valid CSP directives:
   // https://w3c.github.io/webappsec-csp/#framework-directives
-  policy?: { [key: directiveName]: string[]; },
+  policy?: {[key: directiveName]: string[]};
 
   // Controls if CSP is used in report only mode. For delivery mode `"header"`
   // this causes `Content-Security-Policy-Report-Only` HTTP header to be used.
   // Can not be used together with delivery mode `"meta"` as this is not
   // supported by CSP spec.
-  reportOnly?: boolean,
+  reportOnly?: boolean;
 }
 ```
 
@@ -76,23 +97,23 @@ If you omit some or all of the keys, the default configuration will be used, whi
 ```js
 // config/content-security-policy.js
 
-module.exports = function(environment) {
+module.exports = function (environment) {
   return {
     delivery: ['header'],
     enabled: true,
     failTests: true,
     policy: {
-      'default-src':  ["'none'"],
-      'script-src':   ["'self'"],
-      'font-src':     ["'self'"],
-      'connect-src':  ["'self'"],
-      'img-src':      ["'self'"],
-      'style-src':    ["'self'"],
-      'media-src':    ["'self'"],
+      'default-src': ["'none'"],
+      'script-src': ["'self'"],
+      'font-src': ["'self'"],
+      'connect-src': ["'self'"],
+      'img-src': ["'self'"],
+      'style-src': ["'self'"],
+      'media-src': ["'self'"],
     },
     reportOnly: true,
   };
-}
+};
 ```
 
 > Keywords such as `self`, `none`, `unsafe-inline`, nonces and digests must be wrapped in single quotes (`'`) as shown above. Please find more details about valid source expression in [§ 2.3.1. Source Lists of CSP specification](https://www.w3.org/TR/CSP3/#framework-directive-source-list).
@@ -106,34 +127,32 @@ If your site uses **Google Fonts**, **Mixpanel**, a custom API at **custom-api.l
 ```js
 // config/content-security-policy.js
 
-module.exports = function(environment) {
+module.exports = function (environment) {
   return {
     delivery: ['meta'],
     policy: {
       // Deny everything by default
       'default-src': ["'none'"],
       // Allow scripts at https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js
-      'script-src':  ["'self'", "https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js"],
+      'script-src': ["'self'", 'https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js'],
       // Allow fonts to be loaded from http://fonts.gstatic.com
-      'font-src': ["'self'", "http://fonts.gstatic.com"],
+      'font-src': ["'self'", 'http://fonts.gstatic.com'],
       // Allow data (xhr/websocket) from api-js.mixpanel.com and custom-api.local
-      'connect-src': ["'self'", "https://api-js.mixpanel.com", "https://custom-api.local"],
+      'connect-src': ["'self'", 'https://api-js.mixpanel.com', 'https://custom-api.local'],
       // Allow images from the origin itself (i.e. current domain)
       'img-src': ["'self'"],
       // Allow CSS loaded from https://fonts.googleapis.com
-      'style-src': ["'self'", "https://fonts.googleapis.com"],
+      'style-src': ["'self'", 'https://fonts.googleapis.com'],
       // Omit `media-src` from policy
       // Browser will fallback to default-src for media resources (which is 'none', see above)
-      'media-src': null
+      'media-src': null,
     },
-    reportOnly: false
+    reportOnly: false,
   };
 };
 ```
 
-
-FastBoot Integration
-------------------------------------------------------------------------------
+## FastBoot Integration
 
 This addon sets the CSP HTTP response header in FastBoot if it's enabled for the used environment and `delivery` contains `"header"`. It does not override existing CSP headers.
 
@@ -144,17 +163,15 @@ If you don't want the addon to inject the CSP header in FastBoot on production (
 ```js
 // config/content-security-policy.js
 
-module.exports = function(environment) {
+module.exports = function (environment) {
   return {
     enabled: environment !== 'production',
-    delivery: ["header"],
+    delivery: ['header'],
   };
 };
 ```
 
-
-External Configuration
-------------------------------------------------------------------------------
+## External Configuration
 
 In order to configure your production web server, you can use the `csp-headers` Ember CLI command to obtain the configured Content Security Policy:
 
@@ -169,15 +186,11 @@ $ ember csp-headers --environment production --report-uri /csp-report
 default-src 'none'; script-src 'self'; connect-src 'self'; img-src 'self'; style-src 'self'; report-uri /csp-report;
 ```
 
-
-Development Support
-------------------------------------------------------------------------------
+## Development Support
 
 Ember CLI's live reload feature requires a Web Socket connection. If live reload is used with `ember serve` or `ember test --server` the URL used for that Web Socket connection is injected into `connect-src` and `script-src` directives automatically.
 
-
-Test Support
-------------------------------------------------------------------------------
+## Test Support
 
 The addon helps you to ensure that your app or addon is compliant with a specific Content Security Policy by providing test support. It causes tests to fail if the code triggers a violation of the configured CSP.
 
@@ -186,16 +199,14 @@ It's recommended to test your project for CSP compliance. But you could disable 
 ```js
 // config/content-security-policy.js
 
-module.exports = function(environment) {
+module.exports = function (environment) {
   return {
     enabled: environment !== 'test',
   };
 };
 ```
 
-
-Compatibility with other addons
-------------------------------------------------------------------------------
+## Compatibility with other addons
 
 Some addons are not compatible with a strict Content Security Policy. If you face any CSP violations caused by a third-party addon please report at their side. Often it's only a small change to required to make it compliant with a strict CSP. You may want to suggest adding this addon to test for compliance with a strict CSP.
 
@@ -209,8 +220,6 @@ For some addons compliance with a strict CSP requires a custom configuration. Th
 
 Ember-cli-code-coverage uses Istanbul, which injects `new Function('return this')` by default into the app. This requires `'unsafe-eval'` to be allowed by the script directive. Currently there isn't any other option than either adding `'unsafe-eval'` to script directive if code coverage is enabled or disable CSP at all. Details could be found in [this issue](https://github.com/kategengler/ember-cli-code-coverage/issues/214).
 
-
-Deprecations
-------------------------------------------------------------------------------
+## Deprecations
 
 Please find detailed information about deprecations in [deprecation guide](DEPRECATIONS.md).
