@@ -4068,10 +4068,10 @@ electron-to-chromium@^1.3.390, electron-to-chromium@^1.3.47:
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.403.tgz#c8bab4e2e72bf78bc28bad1cc355c061f9cc1918"
   integrity sha512-JaoxV4RzdBAZOnsF4dAlZ2ijJW72MbqO5lNfOBHUWiBQl3Rwe+mk2RCUMrRI3rSClLJ8HSNQNqcry12H+0ZjFw==
 
-ember-addon-tests@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/ember-addon-tests/-/ember-addon-tests-0.0.1.tgz#c190be51c8ea619b796131b93980451d16f0ba62"
-  integrity sha512-C5neD9mLPPBnuPlmuRS9VwJuyT6FdNQFubmqFghDv8IeDMVNnlaRuYcNHInJLCKg/oshNZnkVcqrHFyTatkatA==
+ember-addon-tests@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/ember-addon-tests/-/ember-addon-tests-0.0.2.tgz#5e7f1147b75851c25a51ef2fc94cd05b4da07e52"
+  integrity sha512-xlTyLbUjoiWNQmx7/5JWFgcrrBd/Np8MCipwH42g6wE0eQMFyngFEC6PQ8bojtS9kL4A4iX/gK6HRhPDdFES/Q==
   dependencies:
     "@types/node-fetch" "^2.5.7"
     copy-dir "^1.3.0"
