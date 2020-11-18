@@ -49,5 +49,5 @@ jobs:
     - env: EMBER_CLI_VERSION=beta
 
 script:
-  - yarn add -D ember-cli@${EMBER_CLI_VERSION}
+  - yarn global add ember-cli@${EMBER_CLI_VERSION}
   - yarn test:node
