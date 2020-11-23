@@ -9,7 +9,9 @@ function readAddonConfig(appInstance) {
   //       if already available through CSP meta element
   assert(
     'Required configuration is available at run-time',
-    addonConfig && addonConfig.hasOwnProperty('reportOnly') && addonConfig.hasOwnProperty('policy')
+    addonConfig &&
+      addonConfig.hasOwnProperty('reportOnly') &&
+      addonConfig.hasOwnProperty('policy')
   );
 
   return config['ember-cli-content-security-policy'];
@@ -25,11 +27,16 @@ export function initialize(appInstance) {
   }
 
   let { policy, reportOnly } = readAddonConfig(appInstance);
-  let header = reportOnly ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
+  let header = reportOnly
+    ? 'Content-Security-Policy-Report-Only'
+    : 'Content-Security-Policy';
   let responseHeaders = fastboot.get('response.headers');
 
   // do not override existing CSP header
-  if (responseHeaders.has('Content-Security-Policy-Report-Only') || responseHeaders.has('Content-Security-Policy')) {
+  if (
+    responseHeaders.has('Content-Security-Policy-Report-Only') ||
+    responseHeaders.has('Content-Security-Policy')
+  ) {
     return;
   }
 
@@ -37,5 +44,5 @@ export function initialize(appInstance) {
 }
 
 export default {
-  initialize
+  initialize,
 };

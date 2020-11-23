@@ -2,33 +2,31 @@ const expect = require('chai').expect;
 const TestProject = require('ember-addon-tests').default;
 const denodeify = require('denodeify');
 const request = denodeify(require('request'));
-const {
-  CSP_META_TAG_REG_EXP,
-  removeConfig,
-  setConfig
-} = require('../utils');
+const { CSP_META_TAG_REG_EXP, removeConfig, setConfig } = require('../utils');
 const path = require('path');
 
-describe('e2e: delivers CSP as configured', function() {
+describe('e2e: delivers CSP as configured', function () {
   this.timeout(300000);
 
   let testProject;
 
-  before(async function() {
+  before(async function () {
     testProject = new TestProject({
-      projectRoot: path.join(__dirname, '../..')
+      projectRoot: path.join(__dirname, '../..'),
     });
 
     await testProject.createEmberApp();
-    await testProject.addOwnPackageAsDevDependency('ember-cli-content-security-policy');
+    await testProject.addOwnPackageAsDevDependency(
+      'ember-cli-content-security-policy'
+    );
   });
 
-  describe('scenario: delivery through meta element', function() {
-    before(async function() {
+  describe('scenario: delivery through meta element', function () {
+    before(async function () {
       await setConfig(testProject, {
         delivery: ['header', 'meta'],
         policy: {
-          'font-src': ["'self'", "http://fonts.gstatic.com"],
+          'font-src': ["'self'", 'http://fonts.gstatic.com'],
         },
         reportOnly: false,
       });
@@ -38,28 +36,28 @@ describe('e2e: delivers CSP as configured', function() {
       });
     });
 
-    after(async function() {
+    after(async function () {
       await testProject.stopEmberServer();
       await removeConfig(testProject);
     });
 
-    it('creates a CSP meta tag if `delivery` option includes `"meta"`', async function() {
+    it('creates a CSP meta tag if `delivery` option includes `"meta"`', async function () {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
-          'Accept': 'text/html'
-        }
+          Accept: 'text/html',
+        },
       });
 
       expect(response.body).to.match(CSP_META_TAG_REG_EXP);
     });
 
-    it('delivers same policy by meta element as by HTTP header', async function() {
+    it('delivers same policy by meta element as by HTTP header', async function () {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
-          'Accept': 'text/html'
-        }
+          Accept: 'text/html',
+        },
       });
 
       let cspInHeader = response.headers['content-security-policy'];
@@ -68,8 +66,8 @@ describe('e2e: delivers CSP as configured', function() {
     });
   });
 
-  describe('scenario: report only', function() {
-    before(async function() {
+  describe('scenario: report only', function () {
+    before(async function () {
       await setConfig(testProject, {
         delivery: ['header'],
         reportOnly: true,
@@ -80,26 +78,28 @@ describe('e2e: delivers CSP as configured', function() {
       });
     });
 
-    after(async function() {
+    after(async function () {
       await testProject.stopEmberServer();
       await removeConfig(testProject);
     });
 
-    it('uses Content-Security-Policy-Report-Only header if `reportOnly` option is `true`', async function() {
+    it('uses Content-Security-Policy-Report-Only header if `reportOnly` option is `true`', async function () {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
-          'Accept': 'text/html'
-        }
+          Accept: 'text/html',
+        },
       });
 
-      expect(response.headers).to.include.key('content-security-policy-report-only');
+      expect(response.headers).to.include.key(
+        'content-security-policy-report-only'
+      );
       expect(response.headers).to.not.have.key('content-security-policy');
     });
   });
 
-  describe('scenario: delivery through meta only', function() {
-    before(async function() {
+  describe('scenario: delivery through meta only', function () {
+    before(async function () {
       await setConfig(testProject, {
         delivery: ['meta'],
       });
@@ -109,27 +109,29 @@ describe('e2e: delivers CSP as configured', function() {
       });
     });
 
-    after(async function() {
+    after(async function () {
       await testProject.stopEmberServer();
       await removeConfig(testProject);
     });
 
-    it('does not deliver CSP through HTTP header if delivery does not include "header"', async function() {
+    it('does not deliver CSP through HTTP header if delivery does not include "header"', async function () {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
-          'Accept': 'text/html'
-        }
+          Accept: 'text/html',
+        },
       });
 
-      expect(response.headers).to.not.have.key('content-security-policy-report-only');
+      expect(response.headers).to.not.have.key(
+        'content-security-policy-report-only'
+      );
       expect(response.headers).to.not.have.key('content-security-policy');
       expect(response.body).to.match(CSP_META_TAG_REG_EXP);
     });
   });
 
-  describe('scenario: disabled', function() {
-    before(async function() {
+  describe('scenario: disabled', function () {
+    before(async function () {
       await setConfig(testProject, {
         enabled: false,
       });
@@ -139,32 +141,34 @@ describe('e2e: delivers CSP as configured', function() {
       });
     });
 
-    after(async function() {
+    after(async function () {
       await testProject.stopEmberServer();
       await removeConfig(testProject);
     });
 
-    it('does not deliver CSP if `enabled` option is `false`', async function() {
+    it('does not deliver CSP if `enabled` option is `false`', async function () {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
-          'Accept': 'text/html'
-        }
+          Accept: 'text/html',
+        },
       });
 
       expect(response.headers).to.not.have.key('content-security-policy');
-      expect(response.headers).to.not.have.key('content-security-policy-report-only');
+      expect(response.headers).to.not.have.key(
+        'content-security-policy-report-only'
+      );
       expect(response.body).to.not.match(CSP_META_TAG_REG_EXP);
     });
   });
 
-  describe('feature: live reload support', function() {
-    afterEach(async function() {
+  describe('feature: live reload support', function () {
+    afterEach(async function () {
       await testProject.stopEmberServer();
       await removeConfig(testProject);
     });
 
-    it('adds CSP directives required by live reload', async function() {
+    it('adds CSP directives required by live reload', async function () {
       await setConfig(testProject, {
         delivery: ['header', 'meta'],
       });
@@ -175,8 +179,8 @@ describe('e2e: delivers CSP as configured', function() {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
-          'Accept': 'text/html'
-        }
+          Accept: 'text/html',
+        },
       });
 
       let cspInHeader = response.headers['content-security-policy-report-only'];
@@ -189,7 +193,7 @@ describe('e2e: delivers CSP as configured', function() {
       });
     });
 
-    it('takes live reload configuration into account', async function() {
+    it('takes live reload configuration into account', async function () {
       await setConfig(testProject, {
         delivery: ['header', 'meta'],
       });
@@ -202,8 +206,8 @@ describe('e2e: delivers CSP as configured', function() {
       let response = await request({
         url: 'http://localhost:49494',
         headers: {
-          'Accept': 'text/html'
-        }
+          Accept: 'text/html',
+        },
       });
 
       let cspInHeader = response.headers['content-security-policy-report-only'];
@@ -214,11 +218,11 @@ describe('e2e: delivers CSP as configured', function() {
       });
     });
 
-    it('inherits from default-src if connect-src and script-src are not present', async function() {
+    it('inherits from default-src if connect-src and script-src are not present', async function () {
       await setConfig(testProject, {
         delivery: ['header', 'meta'],
         policy: {
-          'default-src': ["'self'", "foo.com"],
+          'default-src': ["'self'", 'foo.com'],
         },
       });
       await testProject.startEmberServer({
@@ -228,8 +232,8 @@ describe('e2e: delivers CSP as configured', function() {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
-          'Accept': 'text/html'
-        }
+          Accept: 'text/html',
+        },
       });
 
       let cspInHeader = response.headers['content-security-policy-report-only'];
@@ -247,7 +251,7 @@ describe('e2e: delivers CSP as configured', function() {
       });
     });
 
-    it("removes existing 'none' keyword from connect-src", async function() {
+    it("removes existing 'none' keyword from connect-src", async function () {
       await setConfig(testProject, {
         delivery: ['header', 'meta'],
         policy: {
@@ -262,8 +266,8 @@ describe('e2e: delivers CSP as configured', function() {
       let response = await request({
         url: 'http://localhost:49741',
         headers: {
-          'Accept': 'text/html'
-        }
+          Accept: 'text/html',
+        },
       });
 
       let cspInHeader = response.headers['content-security-policy-report-only'];
