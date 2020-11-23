@@ -6,7 +6,8 @@ const {
   appendSourceList,
   buildPolicyString,
   calculateConfig,
-  isIndexHtmlForTesting,
+  debug,
+  getEnvironmentFromRuntimeConfig,
   readConfig,
 } = require('./lib/utils');
 
@@ -67,56 +68,21 @@ module.exports = {
   // FastBoot. This one is returned here as default configuration in order to make it
   // available at run time.
   config: function (environment, runConfig) {
-    // calculate configuration and policy string
-    // hook may be called more than once, but we only need to calculate once
-    if (!this._config) {
-      let { app, project } = this;
-      let ui = project.ui;
-      let ownConfig = readConfig(project, environment);
-      let config = calculateConfig(environment, ownConfig, runConfig, ui);
+    debug('### Cache run-time config locally in config hook');
 
-      this._config = config;
-      this._policyString = buildPolicyString(config.policy);
+    // store run config to be available later
+    this._runConfig = runConfig;
 
-      // generate config for test environment if app includes tests
-      // Note: app is not defined for CLI commands
-      if (app && app.tests) {
-        let ownConfigForTest = readConfig(project, 'test');
-        let runConfigForTest = project.config('test');
-        let configForTest = calculateConfig(
-          'test',
-          ownConfigForTest,
-          runConfigForTest,
-          ui
-        );
-
-        // add static nonce required for tests, but only if if script-src
-        // does not contain 'unsafe-inline'. if a nonce is present, browsers
-        // ignore the 'unsafe-inline' directive.
-        let scriptSrc = configForTest.policy['script-src'];
-        if (!(scriptSrc && scriptSrc.includes("'unsafe-inline'"))) {
-          appendSourceList(
-            configForTest.policy,
-            'script-src',
-            `'nonce-${STATIC_TEST_NONCE}'`
-          );
-        }
-
-        // testem requires frame-src to run
-        configForTest.policy['frame-src'] = ["'self'"];
-
-        this._configForTest = configForTest;
-        this._policyStringForTest = buildPolicyString(configForTest.policy);
-      }
-    }
+    let config = this._getConfigFor(environment);
+    let policyString = buildPolicyString(config.policy);
 
     // CSP header should only be set in FastBoot if
     // - addon is enabled and
     // - configured to deliver CSP via header and
     // - application has ember-cli-fastboot dependency.
     this._needsFastBootSupport =
-      this._config.enabled &&
-      this._config.delivery.includes('header') &&
+      config.enabled &&
+      config.delivery.includes('header') &&
       this.project.findAddonByName('ember-cli-fastboot') !== null;
 
     // Run-time configuration is only needed for FastBoot support.
@@ -129,81 +95,73 @@ module.exports = {
     // and the report only flag, which is determines the header name.
     return {
       'ember-cli-content-security-policy': {
-        policy: this._policyString,
-        reportOnly: this._config.reportOnly,
+        policy: policyString,
+        reportOnly: config.reportOnly,
       },
     };
   },
 
   serverMiddleware: function ({ app: expressApp, options }) {
-    // Configuration is not changeable at run-time. Therefore it's safe to not
-    // register the express middleware at all if addon is disabled and
-    // precalculate dynamic values.
-    if (!this._config.enabled) {
-      return;
-    }
+    debug('### Register middleware to set CSP headers in development server');
 
-    // Need to recalculate the policy if local development server is used to
-    // support live reload, executing tests in development enviroment via
-    // `http://localhost:4200/tests` and reporting CSP violations on CLI.
-    let policyObject = this._config.policy;
+    const requiresLiveReload = options.liveReload;
 
-    // Policy object for tests is only calculated if build includes tests
-    // (`app.tests === true`). If it hasn't been calculated at all, there
-    // is no need to recalculate it.
-    let policyObjectForTest = this._configForTest
-      ? this._configForTest.policy
-      : null;
+    if (requiresLiveReload) {
+      debug('Build requires live reload support');
 
-    // live reload requires some addition CSP directives
-    if (options.liveReload) {
-      allowLiveReload(policyObject, {
+      this._requiresLiveReloadSupport = true;
+      this._liveReloadConfiguration = {
         hostname: options.liveReloadHost,
         port: options.liveReloadPort,
         ssl: options.ssl,
-      });
-
-      if (policyObjectForTest) {
-        allowLiveReload(policyObjectForTest, {
-          hostname: options.liveReloadHost,
-          port: options.liveReloadPort,
-          ssl: options.ssl,
-        });
-      }
-    }
-
-    // add report URI to policy object and allow it as connection source
-    if (this._config.reportOnly && !('report-uri' in policyObject)) {
-      let ecHost = options.host || 'localhost';
-      let ecProtocol = options.ssl ? 'https://' : 'http://';
-      let ecOrigin = ecProtocol + ecHost + ':' + options.port;
-
-      appendSourceList(policyObject, 'connect-src', ecOrigin);
-      policyObject['report-uri'] = ecOrigin + REPORT_PATH;
-
-      if (policyObjectForTest) {
-        appendSourceList(policyObjectForTest, 'connect-src', ecOrigin);
-        policyObjectForTest['report-uri'] = policyObject['report-uri'];
-      }
-    }
-
-    this._policyString = buildPolicyString(policyObject);
-
-    if (policyObjectForTest) {
-      this._policyStringForTest = buildPolicyString(policyObjectForTest);
+      };
+    } else {
+      debug('Build does not require live reload support');
     }
 
     expressApp.use((req, res, next) => {
+      debug('### Setting CSP header in middleware of development server');
+
       // Use policy for test environment if both of these conditions are met:
       // 1. the request is for tests and
       // 2. the build include tests
       let buildIncludeTests = this.app.tests;
       let isRequestForTests =
         req.originalUrl.startsWith('/tests') && buildIncludeTests;
-      let config = isRequestForTests ? this._configForTest : this._config;
-      let policyString = isRequestForTests
-        ? this._policyStringForTest
-        : this._policyString;
+      let environment = isRequestForTests ? 'test' : this.app.env;
+
+      debug(
+        buildIncludeTests
+          ? 'Build includes tests'
+          : 'Build does not include tests'
+      );
+      debug(
+        isRequestForTests ? 'Request is for tests' : 'Request is not for tests'
+      );
+      debug(`Generating CSP for environment ${environment}`);
+      let config = this._getConfigFor(environment);
+
+      if (!config.enabled) {
+        debug('Skipping middleware because addon is not enabled');
+        next();
+        return;
+      }
+
+      if (config.reportOnly && !('report-uri' in config.policy)) {
+        debug(
+          'Injecting report-uri directive into CSP because addon is configured to ' +
+            'use report only mode and CSP does not include report-uri directive'
+        );
+
+        let ecHost = options.host || 'localhost';
+        let ecProtocol = options.ssl ? 'https://' : 'http://';
+        let ecOrigin = ecProtocol + ecHost + ':' + options.port;
+
+        appendSourceList(config.policy, 'connect-src', ecOrigin);
+        config.policy['report-uri'] = ecOrigin + REPORT_PATH;
+      }
+
+      let policyString = buildPolicyString(config.policy);
       let header = config.reportOnly ? CSP_HEADER_REPORT_ONLY : CSP_HEADER;
 
       // clear existing headers before setting ours
@@ -236,30 +194,52 @@ module.exports = {
   },
 
   contentFor: function (type, appConfig, existingContent) {
-    if (!this._config.enabled) {
+    // early skip not implemented contentFor hooks to avoid calculating
+    // configuration for them
+    const implementedContentForHooks = [
+      'head',
+      'test-head',
+      'test-body',
+      'test-body-footer',
+    ];
+    if (!implementedContentForHooks.includes(type)) {
       return;
     }
 
-    // inject CSP meta tag
+    const isTestIndexHtml =
+      type.startsWith('test-') ||
+      getEnvironmentFromRuntimeConfig(existingContent) === 'test';
+    const environment = isTestIndexHtml ? 'test' : appConfig.environment;
+    debug(
+      `### Process contentFor hook for ${type} of ${
+        isTestIndexHtml ? 'index.html' : 'tests/index.html'
+      }`
+    );
+
+    const config = this._getConfigFor(environment);
+    if (!config.enabled) {
+      debug('Skip because not enabled in configuration');
+      return;
+    }
+
+    // inject CSP meta tag in
     if (
-      // if addon is configured to deliver CSP by meta tag
-      (type === 'head' && this._config.delivery.indexOf('meta') !== -1) ||
-      // ensure it's injected in tests/index.html to ensure consistent test results
+      // 1. `head` slot of `index.html` and
+      (type === 'head' && !isTestIndexHtml) ||
+      // 2. `test-head` slot of `tests/index.html`
       type === 'test-head'
     ) {
-      // skip head slot for tests/index.html to prevent including the CSP meta tag twice
-      if (type === 'head' && isIndexHtmlForTesting(existingContent)) {
+      // skip if not configured to deliver via meta tag
+      if (!config.delivery.includes('meta')) {
+        debug(`Skip because not configured to deliver CSP via meta tag`);
         return;
       }
 
-      let config = type === 'head' ? this._config : this._configForTest;
-      let policyString =
-        type === 'head' ? this._policyString : this._policyStringForTest;
+      debug(`Inject meta tag into ${type}`);
 
-      if (
-        this._config.reportOnly &&
-        this._config.delivery.indexOf('meta') !== -1
-      ) {
+      let policyString = buildPolicyString(config.policy);
+
+      if (config.reportOnly && config.delivery.indexOf('meta') !== -1) {
         this.ui.writeWarnLine(
           'Content Security Policy does not support report only mode if delivered via meta element. ' +
             "Either set `reportOnly` to `false` or remove `'meta' from `delivery` in " +
@@ -281,7 +261,7 @@ module.exports = {
     }
 
     // inject event listener needed for test support
-    if (type === 'test-body' && this._config.failTests) {
+    if (type === 'test-body' && config.failTests) {
       let qunitDependency = new VersionChecker(this.project).for('qunit');
       if (qunitDependency.exists() && qunitDependency.lt('2.9.2')) {
         this.ui.writeWarnLine(
@@ -337,19 +317,74 @@ module.exports = {
     return tree;
   },
 
-  // holds configuration for this addon
-  _config: null,
-
-  // holds configuration for test environment for this addon
-  _configForTest: null,
-
   // controls if code needed to set CSP header in fastboot
   // is included in build output
   _needsFastBootSupport: null,
 
-  // holds calculated policy string
-  _policyString: null,
+  // holds the run config
+  // It's set in `config` hook and used later
+  _runConfig: null,
 
-  // holds calculated policy string for test environment
-  _policyStringForTest: null,
+  // controls if live reload support is append to given CSP policy or not
+  // may be set to `true` by `serverMiddleware` hook
+  _requiresLiveReloadSupport: false,
+
+  // hold live reload configuration such as hostname, port and if using ssl
+  // if live reload is used
+  _liveReloadConfiguration: null,
+
+  // returns the config for a given environment and delivery method
+  _getConfigFor(environment) {
+    debug(`Calculate configuration for environment ${environment}`);
+
+    const { project } = this;
+    const { ui } = project;
+    const ownConfig = readConfig(project, environment);
+    const runConfig = this._runConfig;
+    debug(`Own configuration is: ${JSON.stringify(ownConfig)}`);
+    debug(`Run-time configuration is: ${JSON.stringify(runConfig)}`);
+
+    const config = calculateConfig(environment, ownConfig, runConfig, ui);
+    debug(`Calculated configuration: ${JSON.stringify(config)}`);
+
+    if (environment === 'test') {
+      debug('Manipulating configuration to fit test specific needs');
+
+      // add static nonce required for tests, but only if if script-src
+      // does not contain 'unsafe-inline'. if a nonce is present, browsers
+      // ignore the 'unsafe-inline' directive.
+      let scriptSrc = config.policy['script-src'];
+      if (!(scriptSrc && scriptSrc.includes("'unsafe-inline'"))) {
+        appendSourceList(
+          config.policy,
+          'script-src',
+          `'nonce-${STATIC_TEST_NONCE}'`
+        );
+      }
+
+      // testem requires frame-src to run
+      config.policy['frame-src'] = ["'self'"];
+
+      // enforce delivery through meta
+      config.delivery.push('meta');
+
+      debug(
+        `Configuration adjusted for test needs is: ${JSON.stringify(config)}`
+      );
+    }
+
+    if (this._requiresLiveReloadSupport) {
+      debug('Adjusting policy to support live reload');
+
+      allowLiveReload(config.policy, this._liveReloadConfiguration);
+
+      debug(
+        `Configuration adjusted to support live reload is: ${JSON.stringify(
+          config
+        )}`
+      );
+    }
+
+    return config;
+  },
 };
