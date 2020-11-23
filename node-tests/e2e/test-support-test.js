@@ -3,8 +3,47 @@ const TestProject = require('ember-addon-tests').default;
 const fs = require('fs-extra');
 const denodeify = require('denodeify');
 const request = denodeify(require('request'));
-const { CSP_META_TAG_REG_EXP, removeConfig, setConfig } = require('../utils');
+const {
+  CSP_META_TAG_REG_EXP,
+  removeConfig,
+  setConfig,
+  setResolutionForDependency,
+  readPackageJson,
+  removeResolutionsForDependencies,
+} = require('../utils');
 const path = require('path');
+const semverGtr = require('semver/ranges/gtr');
+
+// Depending on Ember CLI version used some manual adjustments are needed even
+// for newly created projects to not violate the default CSP.
+async function adjustForCompatibility(testProject) {
+  // Ember Auto Import is a default dependency of new Ember projects. It uses an `eval` function
+  // internally unless configured to not do so. This violates the default CSP and causes an
+  // `EvalError` to be thrown. This uncatched error will cause the tests to fail - regardless
+  // of our custom test support.
+  // To avoid this issue we uninstall Ember Auto Import for these tests. This can be removed
+  // as soon as Ember CLI Content Security Policy works out of the box with Ember Auto Import.
+  try {
+    await testProject.runCommand('yarn', 'remove', 'ember-auto-import');
+  } catch (error) {
+    // Trying to remove ember-auto-import dependency may fail cause that dependency is not
+    // present for older Ember CLI versions.
+  }
+
+  // Older Ember CLI versions install a QUnit version, which violates the
+  // default CSP. We ask consumer to upgrade QUnit to a more recent QUnit
+  // version in a warning that is logged if QUnit version is less than
+  // 2.9.2. The issue was fixed in Ember CLI 3.10 by upgrading ember-qunit
+  // to ^4.4.1.
+  // We need to upgrade QUnit in tests as well if an Ember CLI version less
+  // than 3.10 is used.
+  const packageJson = await readPackageJson(testProject);
+  const emberCliVersionUsed = packageJson.devDependencies['ember-cli'];
+  if (semverGtr('3.10.0', emberCliVersionUsed)) {
+    await setResolutionForDependency(testProject, { qunit: '>= 2.9.2' });
+    await testProject.runCommand('yarn', 'install');
+  }
+}
 
 describe('e2e: provides test support', function () {
   this.timeout(300000);
@@ -17,50 +56,74 @@ describe('e2e: provides test support', function () {
     });
 
     await testProject.createEmberApp();
-
-    // Ember Auto Import is a default dependency of new Ember projects. It uses an `eval` function
-    // internally unless configured to not do so. This violates the default CSP and causes an
-    // `EvalError` to be thrown. This uncatched error will cause the tests to fail - regardless
-    // of our custom test support.
-    // To avoid this issue we uninstall Ember Auto Import for these tests. This can be removed
-    // as soon as Ember CLI Content Security Policy works out of the box with Ember Auto Import.
-    try {
-      await testProject.runCommand('yarn', 'remove', 'ember-auto-import');
-    } catch (error) {
-      // Trying to remove ember-auto-import dependency may fail cause that dependency is not
-      // present for older Ember CLI versions.
-    }
-
     await testProject.addOwnPackageAsDevDependency(
       'ember-cli-content-security-policy'
     );
+    await adjustForCompatibility(testProject);
+  });
 
-    // create a simple rendering tests that violates default CSP by using
-    // inline JavaScript
-    let testFolder = 'tests/integration/components';
-    let testFile = `${testFolder}/my-component-test.js`;
-    await fs.ensureDir(`${testProject.path}/${testFolder}`);
-    await testProject.writeFile(
-      testFile,
-      `
-        import { module, test } from 'qunit';
-        import { setupRenderingTest } from 'ember-qunit';
-        import { render } from '@ember/test-helpers';
-        import hbs from 'htmlbars-inline-precompile';
+  after(async function () {
+    await removeResolutionsForDependencies(testProject);
+  });
 
-        module('Integration | Component | my-component', function(hooks) {
-          setupRenderingTest(hooks);
+  describe('does not cause test failures on new project', async function () {
+    it('tests are passing for untouched application', async function () {
+      await testProject.runEmberCommand('test');
 
-          test('it renders', async function(assert) {
-            await render(hbs\`<div style='display: none;'></div>\`);
-            assert.ok(true);
-          });
-        });
-      `
-    );
+      // No need to assert anything. Test scenario is fulfilled as long as the
+      // command does not throw.
+    });
+
+    it('tests are passing for untouched addon', async function () {
+      // Global test project is an application. To assert against an addon
+      // we need to create another test project.
+      const testProject = new TestProject({
+        projectRoot: path.join(__dirname, '../..'),
+      });
+
+      await testProject.createEmberAddon();
+      await testProject.addOwnPackageAsDevDependency(
+        'ember-cli-content-security-policy'
+      );
+      await adjustForCompatibility(testProject);
+
+      await testProject.runEmberCommand('test');
+
+      // No need to assert anything. Test scenario is fulfilled as long as the
+      // command does not throw.
+    });
   });
 
   describe('causes tests to fail on CSP violations', async function () {
+    const folderForIntegrationTests = 'tests/integration/components';
+    const fileViolatingCSP = `${folderForIntegrationTests}/my-component-test.js`;
+
+    beforeEach(async function () {
+      // create a simple rendering tests that violates default CSP by using
+      // inline JavaScript
+      await fs.ensureDir(
+        path.join(testProject.path, folderForIntegrationTests)
+      );
+      await testProject.writeFile(
+        fileViolatingCSP,
+        `
+          import { module, test } from 'qunit';
+          import { setupRenderingTest } from 'ember-qunit';
+          import { render } from '@ember/test-helpers';
+          import hbs from 'htmlbars-inline-precompile';
+
+          module('Integration | Component | my-component', function(hooks) {
+            setupRenderingTest(hooks);
+
+            test('it renders', async function(assert) {
+              await render(hbs\`<div style='display: none;'></div>\`);
+              assert.ok(true);
+            });
+          });
+        `
+      );
+    });
+
     afterEach(async function () {
       await removeConfig(testProject);
     });
