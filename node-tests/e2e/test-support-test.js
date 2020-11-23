@@ -60,37 +60,93 @@ describe('e2e: provides test support', function () {
     );
   });
 
-  afterEach(async function () {
-    await removeConfig(testProject);
-  });
-
-  it('causes tests to fail on CSP violations', async function () {
-    // runEmberCommand throws result object if command exists with non zero
-    // exit code
-    try {
-      await testProject.runEmberCommand('test');
-
-      // expect runEmberCommand to throw
-      expect(false).to.be.true;
-    } catch ({ exitCode }) {
-      expect(exitCode).to.equal(1);
-    }
-  });
-
-  it('ensures CSP is applied in tests regradless if executed with development server or not', async function () {
-    await setConfig(testProject, {
-      delivery: ['header'],
+  describe('causes tests to fail on CSP violations', async function () {
+    afterEach(async function () {
+      await removeConfig(testProject);
     });
 
-    await testProject.runEmberCommand('build');
+    it('causes tests to fail on CSP violations', async function () {
+      // runEmberCommand throws result object if command exists with non zero
+      // exit code
+      try {
+        await testProject.runEmberCommand('test');
 
-    let testsIndexHtml = await testProject.readFile(
-      'dist/tests/index.html',
-      'utf8'
-    );
-    let indexHtml = await testProject.readFile('dist/index.html', 'utf8');
-    expect(testsIndexHtml).to.match(CSP_META_TAG_REG_EXP);
-    expect(indexHtml).to.not.match(CSP_META_TAG_REG_EXP);
+        // expect runEmberCommand to throw
+        expect(false).to.be.true;
+      } catch ({ exitCode }) {
+        expect(exitCode).to.equal(1);
+      }
+    });
+
+    it('does not cause tests failures if addon is disabled', async function () {
+      await setConfig(testProject, {
+        enabled: false,
+      });
+      let { exitCode } = await testProject.runEmberCommand('test');
+
+      expect(exitCode).to.equal(0);
+    });
+
+    it('does not cause tests failures if `failTests` config option is `false`', async function () {
+      await setConfig(testProject, {
+        failTests: false,
+      });
+
+      let { exitCode } = await testProject.runEmberCommand('test');
+
+      expect(exitCode).to.equal(0);
+    });
+
+    // One common scenario is when running the server in production mode locally, i.e.
+    // you are doing the production build on your local machine, connecting to your actual production server,
+    // for example via `ember serve -prod`. In these cases we don't want this addon to break.
+    it('does not break development server for builds not including tests', async function () {
+      // TODO: not supported yet
+      await testProject.startEmberServer({
+        environment: 'prodocution',
+        port: '49741',
+      });
+
+      let response = await request({
+        url: 'http://localhost:49741/',
+        headers: {
+          Accept: 'text/html',
+        },
+      });
+      let responseForTests = await request({
+        url: 'http://localhost:49741/tests',
+        headers: {
+          Accept: 'text/html',
+        },
+      });
+
+      expect(response.statusCode).to.equal(200);
+      expect(responseForTests.statusCode).to.equal(200);
+
+      await testProject.stopEmberServer();
+    });
+  });
+
+  describe('ensures consistent results regardless how tests are executed', async function () {
+    afterEach(async function () {
+      await removeConfig(testProject);
+    });
+
+    it('ensures CSP is applied in tests regradless if executed with development server or not', async function () {
+      await setConfig(testProject, {
+        delivery: ['header'],
+      });
+
+      await testProject.runEmberCommand('build');
+
+      let testsIndexHtml = await testProject.readFile(
+        'dist/tests/index.html',
+        'utf8'
+      );
+      let indexHtml = await testProject.readFile('dist/index.html', 'utf8');
+      expect(testsIndexHtml).to.match(CSP_META_TAG_REG_EXP);
+      expect(indexHtml).to.not.match(CSP_META_TAG_REG_EXP);
+    });
   });
 
   describe('adds nonce to script-src if needed', function () {
@@ -176,6 +232,7 @@ describe('e2e: provides test support', function () {
 
     after(async function () {
       await testProject.stopEmberServer();
+      await removeConfig(testProject);
     });
 
     it('uses CSP configuration for test environment for meta tag in tests/index.html', async function () {
@@ -253,53 +310,5 @@ describe('e2e: provides test support', function () {
 
       expect(cspForTests).to.include("frame-src 'self';");
     });
-  });
-
-  it('does not cause tests failures if addon is disabled', async function () {
-    await setConfig(testProject, {
-      enabled: false,
-    });
-    let { exitCode } = await testProject.runEmberCommand('test');
-
-    expect(exitCode).to.equal(0);
-  });
-
-  it('does not cause tests failures if `failTests` config option is `false`', async function () {
-    await setConfig(testProject, {
-      failTests: false,
-    });
-
-    let { exitCode } = await testProject.runEmberCommand('test');
-
-    expect(exitCode).to.equal(0);
-  });
-
-  // One common scenario is when running the server in production mode locally, i.e.
-  // you are doing the production build on your local machine, connecting to your actual production server,
-  // for example via `ember serve -prod`. In these cases we don't want this addon to break.
-  it('does not break development server for builds not including tests', async function () {
-    // TODO: not supported yet
-    await testProject.startEmberServer({
-      environment: 'prodocution',
-      port: '49741',
-    });
-
-    let response = await request({
-      url: 'http://localhost:49741/',
-      headers: {
-        Accept: 'text/html',
-      },
-    });
-    let responseForTests = await request({
-      url: 'http://localhost:49741/tests',
-      headers: {
-        Accept: 'text/html',
-      },
-    });
-
-    expect(response.statusCode).to.equal(200);
-    expect(responseForTests.statusCode).to.equal(200);
-
-    await testProject.stopEmberServer();
   });
 });
