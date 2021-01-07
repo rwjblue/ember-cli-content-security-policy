@@ -51,7 +51,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
-    needs: lint--frozen-lockfile
+    needs: lint
 
     steps:
     - uses: actions/checkout@v2
