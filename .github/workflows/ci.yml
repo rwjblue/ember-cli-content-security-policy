@@ -125,7 +125,7 @@ jobs:
 
 
   try-scenarios:
-    name: Tests - ${{ matrix.ember-cli }}
+    name: Tests - Ember CLI ${{ matrix.ember-cli }}
     runs-on: ubuntu-latest
     continue-on-error: true
     needs: test
