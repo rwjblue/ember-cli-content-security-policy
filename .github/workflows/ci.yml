@@ -113,16 +113,12 @@ jobs:
         path: |
           ${{ steps.global-cache-dir-path.outputs.dir }}
           node_modules
-        key: ${{ runner.os }}-${{ matrix.node-version }}-${{
-          hashFiles('**/yarn.lock'
-          ) }}
+        key: ${{ runner.os }}-${{ matrix.node-version }}-floating-deps
         restore-keys: |
           ${{ runner.os }}-${{ matrix.node-version }}-
 
     - name: Install Dependencies
       run: yarn install --no-lockfile
-      if: |
-        steps.cache-dependencies.outputs.cache-hit != 'true'
 
     - name: Test
       run: yarn test
