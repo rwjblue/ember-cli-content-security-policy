@@ -22,47 +22,97 @@ describe('e2e: delivers CSP as configured', function () {
   });
 
   describe('scenario: delivery through meta element', function () {
-    before(async function () {
-      await setConfig(testProject, {
-        delivery: ['header', 'meta'],
-        policy: {
-          'font-src': ["'self'", 'http://fonts.gstatic.com'],
-        },
-        reportOnly: false,
+    describe('delivers expected policy through meta element', function () {
+      before(async function () {
+        await setConfig(testProject, {
+          delivery: ['header', 'meta'],
+          policy: {
+            'font-src': ["'self'", 'http://fonts.gstatic.com'],
+          },
+          reportOnly: false,
+        });
+
+        await testProject.startEmberServer({
+          port: '49741',
+        });
       });
 
-      await testProject.startEmberServer({
-        port: '49741',
+      after(async function () {
+        await testProject.stopEmberServer();
+        await removeConfig(testProject);
+      });
+
+      it('creates a CSP meta tag if `delivery` option includes `"meta"`', async function () {
+        let response = await request({
+          url: 'http://localhost:49741',
+          headers: {
+            Accept: 'text/html',
+          },
+        });
+
+        expect(response.body).to.match(CSP_META_TAG_REG_EXP);
+      });
+
+      it('delivers same policy by meta element as by HTTP header', async function () {
+        let response = await request({
+          url: 'http://localhost:49741',
+          headers: {
+            Accept: 'text/html',
+          },
+        });
+
+        let cspInHeader = response.headers['content-security-policy'];
+        let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
+        expect(cspInHeader).to.equal(cspInMetaElement);
       });
     });
 
-    after(async function () {
-      await testProject.stopEmberServer();
-      await removeConfig(testProject);
-    });
+    describe('removes report-uri which is not supported for CSP delivered by meta element', function () {
+      before(async function () {
+        await setConfig(testProject, {
+          delivery: ['header', 'meta'],
+          policy: {
+            'font-src': ["'self'", 'http://fonts.gstatic.com'],
+            'report-uri': ['https://examples.com'],
+          },
+          reportOnly: false,
+        });
 
-    it('creates a CSP meta tag if `delivery` option includes `"meta"`', async function () {
-      let response = await request({
-        url: 'http://localhost:49741',
-        headers: {
-          Accept: 'text/html',
-        },
+        await testProject.startEmberServer({
+          port: '49741',
+        });
       });
 
-      expect(response.body).to.match(CSP_META_TAG_REG_EXP);
-    });
-
-    it('delivers same policy by meta element as by HTTP header', async function () {
-      let response = await request({
-        url: 'http://localhost:49741',
-        headers: {
-          Accept: 'text/html',
-        },
+      after(async function () {
+        await removeConfig(testProject);
+        await testProject.stopEmberServer();
       });
 
-      let cspInHeader = response.headers['content-security-policy'];
-      let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
-      expect(cspInHeader).to.equal(cspInMetaElement);
+      it('removes report-uri for CSP delivered through meta tag', async function () {
+        let response = await request({
+          url: 'http://localhost:49741',
+          headers: {
+            Accept: 'text/html',
+          },
+        });
+
+        let cspInMetaElement = response.body.match(CSP_META_TAG_REG_EXP)[1];
+        expect(cspInMetaElement).to.not.include(
+          'report-uri https://examples.com'
+        );
+      });
+
+      it('keeps report-uri for CSP delivered through header', async function () {
+        let response = await request({
+          url: 'http://localhost:49741',
+          headers: {
+            Accept: 'text/html',
+          },
+        });
+
+        let cspInHeader = response.headers['content-security-policy'];
+        expect(cspInHeader).to.include('report-uri https://examples.com');
+      });
     });
   });
 
