@@ -4,7 +4,7 @@ const { calculateConfig } = require('../../lib/utils');
 describe('unit: configuration', function () {
   let UIMock;
 
-  beforeEach(() => {
+  beforeEach(function () {
     UIMock = {
       writeWarnLine() {},
     };

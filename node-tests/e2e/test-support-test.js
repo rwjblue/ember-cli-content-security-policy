@@ -66,7 +66,7 @@ describe('e2e: provides test support', function () {
     await removeResolutionsForDependencies(testProject);
   });
 
-  describe('does not cause test failures on new project', async function () {
+  describe('does not cause test failures on new project', function () {
     it('tests are passing for untouched application', async function () {
       await testProject.runEmberCommand('test');
 
@@ -94,7 +94,7 @@ describe('e2e: provides test support', function () {
     });
   });
 
-  describe('causes tests to fail on CSP violations', async function () {
+  describe('causes tests to fail on CSP violations', function () {
     const folderForIntegrationTests = 'tests/integration/components';
     const fileViolatingCSP = `${folderForIntegrationTests}/my-component-test.js`;
 
@@ -190,7 +190,7 @@ describe('e2e: provides test support', function () {
     });
   });
 
-  describe('ensures consistent results regardless how tests are executed', async function () {
+  describe('ensures consistent results regardless how tests are executed', function () {
     afterEach(async function () {
       await removeConfig(testProject);
     });

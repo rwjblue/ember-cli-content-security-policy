@@ -19,14 +19,13 @@ module.exports = {
   env: {
     browser: true,
   },
-  rules: {
-    'ember/no-jquery': 'error',
-  },
+  rules: {},
   overrides: [
     // node files
     {
       files: [
         '.eslintrc.js',
+        '.prettierrc.js',
         '.template-lintrc.js',
         'ember-cli-build.js',
         'index.js',
@@ -34,7 +33,6 @@ module.exports = {
         'blueprints/*/index.js',
         'config/**/*.js',
         'tests/dummy/config/**/*.js',
-        'node-tests/**/*.js',
       ],
       excludedFiles: [
         'addon/**',
@@ -50,25 +48,21 @@ module.exports = {
         node: true,
       },
       plugins: ['node'],
-      rules: Object.assign(
-        {},
-        require('eslint-plugin-node').configs.recommended.rules,
-        {
-          // add your custom rules and overrides for node files here
-        }
-      ),
+      extends: ['plugin:node/recommended'],
     },
-    // mocha tests, extending node files configuration
+    // mocha files
     {
       files: ['node-tests/**/*.js'],
-      globals: {
-        after: 'readonly',
-        afterEach: 'readonly',
-        before: 'readonly',
-        beforeEach: 'readonly',
-        describe: 'readonly',
-        it: 'readonly',
+      parserOptions: {
+        sourceType: 'script',
       },
+      env: {
+        browser: false,
+        mocha: true,
+        node: true,
+      },
+      plugins: ['node', 'mocha'],
+      extends: ['plugin:node/recommended', 'plugin:mocha/recommended'],
     },
   ],
 };

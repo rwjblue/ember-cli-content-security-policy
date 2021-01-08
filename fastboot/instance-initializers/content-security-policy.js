@@ -10,8 +10,8 @@ function readAddonConfig(appInstance) {
   assert(
     'Required configuration is available at run-time',
     addonConfig &&
-      addonConfig.hasOwnProperty('reportOnly') &&
-      addonConfig.hasOwnProperty('policy')
+      Object.keys(addonConfig).includes('reportOnly') &&
+      Object.keys(addonConfig).includes('policy')
   );
 
   return config['ember-cli-content-security-policy'];
