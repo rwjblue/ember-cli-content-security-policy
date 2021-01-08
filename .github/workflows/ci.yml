@@ -85,7 +85,9 @@ jobs:
         steps.cache-dependencies.outputs.cache-hit != 'true'
 
     - name: Test
-      run: yarn test
+      run: |
+        yarn test:ember
+        yarn test:node
 
 
   floating-dependencies:
@@ -121,7 +123,9 @@ jobs:
       run: yarn install --no-lockfile
 
     - name: Test
-      run: yarn test
+      run: |
+        yarn test:ember
+        yarn test:node
 
 
   try-scenarios:
