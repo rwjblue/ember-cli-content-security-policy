@@ -30,6 +30,7 @@
     "body-parser": "^1.17.0",
     "chalk": "^4.0.0",
     "debug": "^4.3.1",
+    "ember-auto-import": "^1.10.1",
     "ember-cli-babel": "^7.23.0",
     "ember-cli-version-checker": "^5.0.2"
   },
@@ -43,7 +44,6 @@
     "denodeify": "^1.2.1",
     "ember-addon-tests": "^0.0.2",
     "ember-cli": "~3.24.0",
-    "ember-cli-addon-tests": "^0.11.1",
     "ember-cli-dependency-checker": "^3.2.0",
     "ember-cli-fastboot": "^2.2.1",
     "ember-cli-htmlbars": "^5.3.1",
