@@ -374,4 +374,48 @@ describe('e2e: provides test support', function () {
       expect(cspForTests).to.include("frame-src 'self';");
     });
   });
+
+  describe('it appends to existing frame-src', function () {
+    before(async function () {
+      await setConfig(testProject, {
+        delivery: ['header', 'meta'],
+        reportOnly: false,
+        policy: {
+          'frame-src': ['data:'],
+        },
+      });
+
+      await testProject.startEmberServer({
+        port: '49741',
+      });
+    });
+
+    after(async function () {
+      await testProject.stopEmberServer();
+
+      await removeConfig(testProject);
+    });
+
+    it('it appends to existing frame-src in CSP delivered by meta tag', async function () {
+      let testsIndexHtml = await testProject.readFile(
+        'dist/tests/index.html',
+        'utf8'
+      );
+      let [, cspInTestsIndexHtml] = testsIndexHtml.match(CSP_META_TAG_REG_EXP);
+
+      expect(cspInTestsIndexHtml).to.include("frame-src data: 'self';");
+    });
+
+    it('it appends to existing frame-src in CSP delivered by HTTP header', async function () {
+      let responseForTests = await request({
+        url: 'http://localhost:49741/tests',
+        headers: {
+          Accept: 'text/html',
+        },
+      });
+      let cspForTests = responseForTests.headers['content-security-policy'];
+
+      expect(cspForTests).to.include("frame-src data: 'self';");
+    });
+  });
 });
