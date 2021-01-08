@@ -147,7 +147,7 @@ module.exports = {
         return;
       }
 
-      if (config.reportOnly && !('report-uri' in config.policy)) {
+      if (config.reportOnly && !(CSP_REPORT_URI in config.policy)) {
         debug(
           'Injecting report-uri directive into CSP because addon is configured to ' +
             'use report only mode and CSP does not include report-uri directive'
@@ -158,7 +158,7 @@ module.exports = {
         let ecOrigin = ecProtocol + ecHost + ':' + options.port;
 
         appendSourceList(config.policy, 'connect-src', ecOrigin);
-        config.policy['report-uri'] = ecOrigin + REPORT_PATH;
+        config.policy[CSP_REPORT_URI] = ecOrigin + REPORT_PATH;
       }
 
       let policyString = buildPolicyString(config.policy);
