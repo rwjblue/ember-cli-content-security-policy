@@ -1,3 +1,32 @@
+Version 9 of Highlight.js has reached EOL and is no longer supported.
+Please upgrade or ask whatever dependency you are using to upgrade.
+https://github.com/highlightjs/highlight.js/issues/2877
+
+## v2.0.0-2 (2021-01-09)
+
+#### :bug: Bug Fix
+* [#172](https://github.com/rwjblue/ember-cli-content-security-policy/pull/172) remove report-uri from policy delivered through meta ([@jelhan](https://github.com/jelhan))
+* [#152](https://github.com/rwjblue/ember-cli-content-security-policy/pull/152) append frame-src config in test mode ([@chbonser](https://github.com/chbonser))
+* [#158](https://github.com/rwjblue/ember-cli-content-security-policy/pull/158) Support live reload and add optional debug log ([@jelhan](https://github.com/jelhan))
+* [#156](https://github.com/rwjblue/ember-cli-content-security-policy/pull/156) Remove existing 'none' keyword when applying to source list ([@jelhan](https://github.com/jelhan))
+
+#### :memo: Documentation
+* [#160](https://github.com/rwjblue/ember-cli-content-security-policy/pull/160) doc: updated default mixpanel config ([@MichalBryxi](https://github.com/MichalBryxi))
+
+#### :house: Internal
+* [#170](https://github.com/rwjblue/ember-cli-content-security-policy/pull/170) migrate from TravisCI to GitHub Actions ([@jelhan](https://github.com/jelhan))
+* [#164](https://github.com/rwjblue/ember-cli-content-security-policy/pull/164) test that addon does not break newly generated projects ([@jelhan](https://github.com/jelhan))
+* [#162](https://github.com/rwjblue/ember-cli-content-security-policy/pull/162) setup Prettier ([@zg3d](https://github.com/zg3d))
+* [#161](https://github.com/rwjblue/ember-cli-content-security-policy/pull/161) run tests against untouched package ([@jelhan](https://github.com/jelhan))
+* [#154](https://github.com/rwjblue/ember-cli-content-security-policy/pull/154) refactor tests to use Ember Addon Tests ([@jelhan](https://github.com/jelhan))
+
+#### Committers: 4
+- Chris Bonser ([@chbonser](https://github.com/chbonser))
+- Devansh Shah ([@zg3d](https://github.com/zg3d))
+- Jeldrik Hanschke ([@jelhan](https://github.com/jelhan))
+- Michal Bryxí ([@MichalBryxi](https://github.com/MichalBryxi))
+
+
 ## v2.0.0-1 (2020-04-15)
 
 #### :bug: Bug Fix
