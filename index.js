@@ -237,6 +237,14 @@ module.exports = {
 
       debug(`Inject meta tag into ${type}`);
 
+      if (config.policy['report-uri']) {
+        debug(
+          'Remove `report-uri` directive from policy as it is not supported for CSP meta tag'
+        );
+
+        delete config.policy['report-uri'];
+      }
+
       let policyString = buildPolicyString(config.policy);
 
       if (config.reportOnly && config.delivery.indexOf('meta') !== -1) {
