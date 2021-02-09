@@ -1,6 +1,5 @@
-Version 9 of Highlight.js has reached EOL and is no longer supported.
-Please upgrade or ask whatever dependency you are using to upgrade.
-https://github.com/highlightjs/highlight.js/issues/2877
+# Changelog
+
 
 ## v2.0.0-2 (2021-01-09)
 
