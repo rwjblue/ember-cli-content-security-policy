@@ -54,7 +54,6 @@ type directiveName =
   | 'navigate-to'
   // Reporting Directives
   | 'report-uri'
-  | 'report-uri'
   | 'report-to'
   // Directives Defined in Other Documents
   | 'block-all-mixed-content'
