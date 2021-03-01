@@ -4968,12 +4968,7 @@ ember-resolver@^8.0.2:
     ember-cli-version-checker "^5.1.1"
     resolve "^1.17.0"
 
-ember-rfc176-data@^0.3.12:
-  version "0.3.12"
-  resolved "https://registry.yarnpkg.com/ember-rfc176-data/-/ember-rfc176-data-0.3.12.tgz#90d82878e69e2ac9a5438e8ce14d12c6031c5bd2"
-  integrity sha512-g9HeZj/gU5bfIIrGXkP7MhS2b3Vu5DfNUrYr14hy99TgIvtZETO+96QF4WOEUXGjIJdfTRjerVnQlqngPQSv1g==
-
-ember-rfc176-data@^0.3.16:
+ember-rfc176-data@^0.3.12, ember-rfc176-data@^0.3.15, ember-rfc176-data@^0.3.16:
   version "0.3.16"
   resolved "https://registry.yarnpkg.com/ember-rfc176-data/-/ember-rfc176-data-0.3.16.tgz#2ace0ac9cf9016d493a74a1d931643a308679803"
   integrity sha512-IYAzffS90r2ybAcx8c2qprYfkxa70G+/UPkxMN1hw55DU5S2aLOX6v3umKDZItoRhrvZMCnzwsdfKSrKdC9Wbg==
@@ -5294,13 +5289,14 @@ eslint-config-prettier@^7.2.0:
   resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-7.2.0.tgz#f4a4bd2832e810e8cc7c1411ec85b3e85c0c53f9"
   integrity sha512-rV4Qu0C3nfJKPOAhFujFxB7RMP+URFyQqqOZW9DMRD7ZDTFyjaIlETU3xzHELt++4ugC0+Jm084HQYkkJe+Ivg==
 
-eslint-plugin-ember@^8.1.1:
-  version "8.2.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-ember/-/eslint-plugin-ember-8.2.0.tgz#90c14c82a6e81280c27baaf64b62c1c4786b5f26"
-  integrity sha512-QJhqkYoLOoEm2jodozxztGA5nxvc6pmeUJCdhxIyDCCRGb7+E/FS6dfJ/WMqTbiePlmNJ0EZSOUgUG54LdHsRQ==
+eslint-plugin-ember@^8.14.0:
+  version "8.14.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-ember/-/eslint-plugin-ember-8.14.0.tgz#fc4c5119b5a1c87604a7bf920ca397783b96b7be"
+  integrity sha512-PQhR58omMAZzcJOB8GLWzL6l/vjRZ2Uo1eohxOmgPUyeBkHfZAMlvK+OSeneMLIr4azLQ4GISkklwv6lxb8qnw==
   dependencies:
     "@ember-data/rfc395-data" "^0.0.4"
-    ember-rfc176-data "^0.3.12"
+    ember-rfc176-data "^0.3.15"
+    lodash.kebabcase "^4.1.1"
     snake-case "^3.0.3"
 
 eslint-plugin-es@^3.0.0:
@@ -7807,6 +7803,11 @@ lodash.isarray@^3.0.0:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/lodash.isarray/-/lodash.isarray-3.0.4.tgz#79e4eb88c36a8122af86f844aa9bcd851b5fbb55"
   integrity sha1-eeTriMNqgSKvhvhEqpvNhRtfu1U=
+
+lodash.kebabcase@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/lodash.kebabcase/-/lodash.kebabcase-4.1.1.tgz#8489b1cb0d29ff88195cceca448ff6d6cc295c36"
+  integrity sha1-hImxyw0p/4gZXM7KRI/21swpXDY=
 
 lodash.keys@^3.0.0:
   version "3.1.2"
