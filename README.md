@@ -50,7 +50,7 @@ type directiveName =
   | 'sandbox'
   // Navigation Directives
   | 'form-action'
-  | 'form-ancestors'
+  | 'frame-ancestors'
   | 'navigate-to'
   // Reporting Directives
   | 'report-uri'
