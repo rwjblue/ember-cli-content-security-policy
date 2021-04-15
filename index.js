@@ -298,7 +298,7 @@ module.exports = {
     if (type === 'test-body-footer') {
       existingContent.forEach((entry, index) => {
         if (
-          /<script>\s*Ember.assert\(.*EmberENV.TESTS_FILE_LOADED\);\s*<\/script>/.test(
+          /<script>.*?Ember\.assert\(.*EmberENV\.TESTS_FILE_LOADED\);\s*}\);<\/script>/.test(
             entry
           )
         ) {
