@@ -296,12 +296,23 @@ module.exports = {
 
     // Add nonce to <script> tag inserted by Ember CLI to assert that test file was loaded.
     if (type === 'test-body-footer') {
+      let emberCliDependency = new VersionChecker(this.project).for(
+        'ember-cli'
+      );
+
       existingContent.forEach((entry, index) => {
-        if (
-          /<script>\s*Ember.assert\(.*EmberENV.TESTS_FILE_LOADED\);\s*<\/script>/.test(
+        let result;
+        if (emberCliDependency.exists() && emberCliDependency.lt('3.25.1')) {
+          result = /<script>\s*Ember.assert\(.*EmberENV.TESTS_FILE_LOADED\);\s*<\/script>/.test(
             entry
-          )
-        ) {
+          );
+        } else {
+          result = /<script>.*?Ember\.assert\(.*EmberENV\.TESTS_FILE_LOADED\);\s*}\);<\/script>/.test(
+            entry
+          );
+        }
+
+        if (result) {
           existingContent[index] = entry.replace(
             '<script>',
             '<script nonce="' + STATIC_TEST_NONCE + '">'
