@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v2.0.0-3 (2021-04-16)
+
+#### :bug: Bug Fix
+* [#197](https://github.com/rwjblue/ember-cli-content-security-policy/pull/197) Support Ember CLI >= 3.25.1 ([@snewcomer](https://github.com/snewcomer))
+
+#### :memo: Documentation
+* [#195](https://github.com/rwjblue/ember-cli-content-security-policy/pull/195) Fix typo `form-ancestors` -> `frame-ancestors` in readme ([@nicomihalich](https://github.com/nicomihalich))
+* [#188](https://github.com/rwjblue/ember-cli-content-security-policy/pull/188) remove duplicated entry in config interface documentation ([@jelhan](https://github.com/jelhan))
+
+#### Committers: 4
+- Jeldrik Hanschke ([@jelhan](https://github.com/jelhan))
+- Nico Mihalich ([@nicomihalich](https://github.com/nicomihalich))
+- Scott Newcomer ([@snewcomer](https://github.com/snewcomer))
+- [@dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+
+
 ## v2.0.0-2 (2021-01-09)
 
 #### :bug: Bug Fix
