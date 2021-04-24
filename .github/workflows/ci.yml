@@ -128,7 +128,7 @@ jobs:
     name: Tests - Ember CLI ${{ matrix.ember-cli }}
     runs-on: ubuntu-latest
     continue-on-error: true
-    # needs: test
+    needs: test
 
     strategy:
       fail-fast: true
