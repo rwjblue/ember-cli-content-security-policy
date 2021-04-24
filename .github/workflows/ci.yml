@@ -128,7 +128,7 @@ jobs:
     name: Tests - Ember CLI ${{ matrix.ember-cli }}
     runs-on: ubuntu-latest
     continue-on-error: true
-    needs: test
+    # needs: test
 
     strategy:
       fail-fast: true
@@ -176,7 +176,9 @@ jobs:
         steps.cache-dependencies.outputs.cache-hit != 'true'
 
     - name: Install Ember CLI
-      run: yarn global add ember-cli@${EMBER_CLI_VERSION}
+      run: |
+        yarn global add ember-cli@${EMBER_CLI_VERSION}
+        echo "$(yarn global bin)" >> $GITHUB_PATH
       env:
         EMBER_CLI_VERSION: ${{ matrix.ember-cli }}
 
