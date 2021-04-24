@@ -181,4 +181,4 @@ jobs:
         EMBER_CLI_VERSION: ${{ matrix.ember-cli }}
 
     - name: Test
-      run: yarn test:node
+      run: mocha node-tests/**/*-test.js
