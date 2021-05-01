@@ -72,7 +72,7 @@
     "release-it": "^14.4.1",
     "release-it-lerna-changelog": "^3.1.0",
     "request": "^2.88.0",
-    "semver": "^7.3.2"
+    "semver": "^7.3.5"
   },
   "engines": {
     "node": "10.* || >= 12"
