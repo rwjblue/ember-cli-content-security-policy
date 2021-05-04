@@ -13,6 +13,7 @@ const {
 } = require('../utils');
 const path = require('path');
 const semverGtr = require('semver/ranges/gtr');
+const semverRangeSubset = require('semver/ranges/subset');
 
 // Depending on Ember CLI version used some manual adjustments are needed even
 // for newly created projects to not violate the default CSP.
@@ -41,6 +42,18 @@ async function adjustForCompatibility(testProject) {
   const emberCliVersionUsed = packageJson.devDependencies['ember-cli'];
   if (semverGtr('3.10.0', emberCliVersionUsed)) {
     await setResolutionForDependency(testProject, { qunit: '>= 2.9.2' });
+    await testProject.runCommand('yarn', 'install');
+  }
+
+  // Ember CLI ~3.8.0 has an issue that sometimes `@ember/string` is imported
+  // but does not exist. This affects addons only. A work-a-round is adding
+  // `@ember/string` package as a dependency for addons generated with Ember
+  // CLI ~3.8.0. See this GitHub issue for details:
+  // https://github.com/emberjs/data/issues/6791
+  const isAddon = fs.existsSync(path.join(testProject.path, 'addon'));
+  const isEmber38 = semverRangeSubset(emberCliVersionUsed, '~3.8.0');
+  if (isEmber38 && isAddon) {
+    await testProject.addDevDependency('@ember/string');
     await testProject.runCommand('yarn', 'install');
   }
 }
