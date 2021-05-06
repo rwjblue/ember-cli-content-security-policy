@@ -1,6 +1,15 @@
 # Changelog
 
 
+## v2.0.0-4 (2021-05-06)
+
+#### :bug: Bug Fix
+* [#201](https://github.com/rwjblue/ember-cli-content-security-policy/pull/201) Support Ember CLI >= 3.26.0 and match injected script element by all supported Ember CLI versions with same RegExp ([@snewcomer](https://github.com/snewcomer))
+
+#### Committers: 1
+- Scott Newcomer ([@snewcomer](https://github.com/snewcomer))
+
+
 ## v2.0.0-3 (2021-04-16)
 
 #### :bug: Bug Fix
