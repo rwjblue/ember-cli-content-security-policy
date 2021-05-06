@@ -22,10 +22,17 @@ async function adjustForCompatibility(testProject) {
   // internally unless configured to not do so. This violates the default CSP and causes an
   // `EvalError` to be thrown. This uncatched error will cause the tests to fail - regardless
   // of our custom test support.
-  // To avoid this issue we uninstall Ember Auto Import for these tests. This can be removed
-  // as soon as Ember CLI Content Security Policy works out of the box with Ember Auto Import.
+  // We need to adjust Ember Auto Import's configuration prevent this. It can be removed as
+  // soon as Ember CLI Content Security Policy works out of the box with Ember Auto Import.
   try {
-    await testProject.runCommand('yarn', 'remove', 'ember-auto-import');
+    const emberCliBuildJs = await testProject.readFile('ember-cli-build.js');
+    await testProject.writeFile(
+      'ember-cli-build.js',
+      emberCliBuildJs.replace(
+        '// Add options here',
+        'autoImport: { forbidEval: true }'
+      )
+    );
   } catch (error) {
     // Trying to remove ember-auto-import dependency may fail cause that dependency is not
     // present for older Ember CLI versions.
