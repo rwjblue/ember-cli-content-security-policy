@@ -36,7 +36,7 @@
     "@glimmer/tracking": "^1.0.0",
     "babel-eslint": "^10.0.3",
     "broccoli-asset-rev": "^3.0.0",
-    "chai": "^4.3.0",
+    "chai": "^4.3.4",
     "denodeify": "^1.2.1",
     "ember-addon-tests": "^0.0.2",
     "ember-cli": "~3.16.1",
