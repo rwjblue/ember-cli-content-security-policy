@@ -13,7 +13,6 @@ const {
 } = require('../utils');
 const path = require('path');
 const semverGtr = require('semver/ranges/gtr');
-const semverRangeSubset = require('semver/ranges/subset');
 
 // Depending on Ember CLI version used some manual adjustments are needed even
 // for newly created projects to not violate the default CSP.
