@@ -7,7 +7,6 @@ module.exports = function (defaults) {
     autoImport: {
       forbidEval: true,
     },
-    storeConfigInMeta: false,
   });
 
   /*
