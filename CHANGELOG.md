@@ -1,6 +1,27 @@
 # Changelog
 
 
+
+## v2.0.0-5 (2021-10-28)
+
+#### :boom: Breaking Change
+* [#243](https://github.com/rwjblue/ember-cli-content-security-policy/pull/243) drop support for node 10 ([@jelhan](https://github.com/jelhan))
+
+#### :bug: Bug Fix
+* [#249](https://github.com/rwjblue/ember-cli-content-security-policy/pull/249) use environment from appConfig instead of deriving it ourselves ([@jelhan](https://github.com/jelhan))
+
+#### :memo: Documentation
+* [#246](https://github.com/rwjblue/ember-cli-content-security-policy/pull/246) document Embroider compatiblity ([@jelhan](https://github.com/jelhan))
+
+#### :house: Internal
+* [#198](https://github.com/rwjblue/ember-cli-content-security-policy/pull/198) Update Ember CLI blueprints to 3.26.0 ([@snewcomer](https://github.com/snewcomer))
+* [#202](https://github.com/rwjblue/ember-cli-content-security-policy/pull/202) Run scenarios with expected Ember CLI version ([@jelhan](https://github.com/jelhan))
+
+#### Committers: 3
+- Jeldrik Hanschke ([@jelhan](https://github.com/jelhan))
+- Scott Newcomer ([@snewcomer](https://github.com/snewcomer))
+- [@dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+
 ## v2.0.0-4 (2021-05-06)
 
 #### :bug: Bug Fix
