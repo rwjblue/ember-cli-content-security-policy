@@ -7,7 +7,6 @@ const {
   buildPolicyString,
   calculateConfig,
   debug,
-  getEnvironmentFromRuntimeConfig,
   readConfig,
 } = require('./lib/utils');
 
@@ -206,15 +205,8 @@ module.exports = {
       return;
     }
 
-    const isTestIndexHtml =
-      type.startsWith('test-') ||
-      getEnvironmentFromRuntimeConfig(existingContent) === 'test';
-    const environment = isTestIndexHtml ? 'test' : appConfig.environment;
-    debug(
-      `### Process contentFor hook for ${type} of ${
-        isTestIndexHtml ? 'index.html' : 'tests/index.html'
-      }`
-    );
+    const { environment } = appConfig;
+    debug(`### Process contentFor hook ${type} for environment ${environment}`);
 
     const config = this._getConfigFor(environment);
     if (!config.enabled) {
@@ -222,13 +214,8 @@ module.exports = {
       return;
     }
 
-    // inject CSP meta tag in
-    if (
-      // 1. `head` slot of `index.html` and
-      (type === 'head' && !isTestIndexHtml) ||
-      // 2. `test-head` slot of `tests/index.html`
-      type === 'test-head'
-    ) {
+    // inject CSP meta tag in head
+    if (type === 'head') {
       // skip if not configured to deliver via meta tag
       if (!config.delivery.includes('meta')) {
         debug(`Skip because not configured to deliver CSP via meta tag`);
