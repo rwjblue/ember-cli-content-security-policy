@@ -12,7 +12,7 @@ In any case, using this addon helps keeping CSP in the forefront of your thought
 
 - Ember.js v2.18 or above
 - Ember CLI v3.4 or above
-- Node.js v10 or above
+- Node.js v12 or above
 
 ## Installation
 
