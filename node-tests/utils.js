@@ -2,7 +2,8 @@ const path = require('path');
 const fs = require('fs');
 
 const CONFIG_PATH = 'config/content-security-policy.js';
-const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content="(.*)">/i;
+const CSP_META_TAG_REG_EXP =
+  /<meta http-equiv="Content-Security-Policy" content="(.*)">/i;
 
 async function setConfig(testProject, config) {
   let content = `module.exports = function() { return ${JSON.stringify(
