@@ -27,6 +27,7 @@
 /node-tests/
 /testem.js
 /tests/
+/yarn-error.log
 /yarn.lock
 .gitkeep
 
