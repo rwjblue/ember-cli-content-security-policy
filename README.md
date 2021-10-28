@@ -215,6 +215,35 @@ For some addons compliance with a strict CSP requires a custom configuration. Th
 
 [Ember Auto Import](https://github.com/ef4/ember-auto-import#ember-auto-import) uses the `eval` function by default in development builds. This violates the default CSP policy. It's recommended to set Ember Auto Import's `forbidEval` option to `true` if using Content Security Policy. You should _not_ add `'unsafe-eval'` to `script-src` directive as this disalbes main security provided by CSP.
 
+### Embroider
+
+[Webpack](https://webpack.js.org/), which is used by [Embroider](https://github.com/embroider-build/embroider), uses the `eval` function by default in development builds to generate a source map. This violates the default CSP policy. It's recommended to configure Webpack to use [`'source-map'` strategy to generate source maps](https://webpack.js.org/configuration/devtool/). To do so, add the following Embroider configuration:
+
+```js
+return require('@embroider/compat').compatBuild(app, Webpack, {
+  packagerOptions: {
+    // other configuration
+    webpackConfig: {
+      devtool: 'source-map',
+    },
+  },
+});
+```
+
+For addons using `maybeEmbroider` utility provided by `@embroider/test-setup` the configuration looks like this:
+
+```js
+const { maybeEmbroider } = require('@embroider/test-setup');
+return maybeEmbroider(app, {
+  // other configuration
+  packagerOptions: {
+    webpackConfig: {
+      devtool: 'source-map',
+    },
+  },
+});
+```
+
 ### ember-cli-code-coverage
 
 Ember-cli-code-coverage uses Istanbul, which injects `new Function('return this')` by default into the app. This requires `'unsafe-eval'` to be allowed by the script directive. Currently there isn't any other option than either adding `'unsafe-eval'` to script directive if code coverage is enabled or disable CSP at all. Details could be found in [this issue](https://github.com/kategengler/ember-cli-code-coverage/issues/214).
