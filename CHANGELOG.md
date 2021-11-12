@@ -2,6 +2,11 @@
 
 
 
+## v2.0.0 (2021-11-12)
+
+v2.0.0 is the same as last pre-release (v2.0.0-5). It does not include any additional changes.
+
+
 ## v2.0.0-5 (2021-10-28)
 
 #### :boom: Breaking Change
