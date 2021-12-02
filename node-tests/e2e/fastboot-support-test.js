@@ -65,7 +65,7 @@ describe('e2e: fastboot integration', function () {
     await testProject.addOwnPackageAsDevDependency(
       'ember-cli-content-security-policy'
     );
-    await testProject.addDevDependency('ember-cli-fastboot');
+    await testProject.addDevDependency('ember-cli-fastboot', '^3.2.0-beta.5');
     await testProject.addDevDependency('fastboot-app-server');
 
     // Quick Start instructions of FastBoot App Server
