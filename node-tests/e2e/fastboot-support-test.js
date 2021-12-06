@@ -110,6 +110,30 @@ describe('e2e: fastboot integration', function () {
     });
   });
 
+  describe('scenario: with reportOnly = false', function () {
+    before(async function () {
+      await setConfig(testProject, { reportOnly: false });
+      await testProject.runEmberCommand('build');
+      await startServer();
+    });
+
+    after(async function () {
+      await stopServer();
+      await removeConfig(testProject);
+    });
+
+    it.only('sets CSP header if served via FastBoot', async function () {
+      let response = await request({
+        url: 'http://localhost:49742',
+        headers: {
+          Accept: 'text/html',
+        },
+      });
+
+      expect(response.headers).to.include.key('content-security-policy');
+    });
+  });
+
   describe('scenario: disabled', function () {
     before(async function () {
       await setConfig(testProject, { enabled: false });

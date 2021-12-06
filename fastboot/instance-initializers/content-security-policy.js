@@ -11,7 +11,7 @@ function readAddonConfig(appInstance) {
     'Required configuration is available at run-time',
     typeof addonConfig === 'object' &&
       typeof addonConfig.reportOnly === 'boolean' &&
-      typeof addonConfig.policy === 'object'
+      typeof addonConfig.policy === 'string'
   );
 
   return config['ember-cli-content-security-policy'];
