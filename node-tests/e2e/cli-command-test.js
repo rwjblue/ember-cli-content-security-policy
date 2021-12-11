@@ -39,4 +39,39 @@ describe('e2e: CLI command csp-headers', function () {
       "default-src 'self'; script-src 'self' 'unsafe-inline';"
     );
   });
+
+  describe('passes environment into the configuration', function () {
+    beforeEach(async function () {
+      await setConfig(testProject, {
+        policy: {
+          'default-src': "'self'",
+          'script-src':
+            "{{\"'self'\" + (environment === 'development' ? \" 'unsafe-inline'\" : '')}}",
+          'font-src':
+            "{{\"'self'\" + (environment === 'production' ? \" http://fonts.gstatic.com\" : '')}}",
+        },
+      });
+    });
+
+    it('passes development as default', async function () {
+      let { stdout } = await testProject.runEmberCommand(
+        'csp-headers',
+        '--silent'
+      );
+      expect(stdout).to.equal(
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; font-src 'self';"
+      );
+    });
+
+    it('passes specified environment', async function () {
+      let { stdout } = await testProject.runEmberCommand(
+        'csp-headers',
+        '--silent',
+        '--environment=production'
+      );
+      expect(stdout).to.equal(
+        "default-src 'self'; script-src 'self'; font-src 'self' http://fonts.gstatic.com;"
+      );
+    });
+  });
 });
