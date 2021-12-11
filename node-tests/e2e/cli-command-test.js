@@ -39,4 +39,31 @@ describe('e2e: CLI command csp-headers', function () {
       "default-src 'self'; script-src 'self' 'unsafe-inline';"
     );
   });
+
+  it('passes environment into the configuration', async function () {
+    await setConfig(testProject, {
+      policy: {
+        'default-src': "'self'",
+        'script-src':
+          "{{\"'self'\" + environment === 'development' ? \" 'unsafe-inline'\" : ''}}",
+      },
+    });
+
+    let { stdout } = await testProject.runEmberCommand(
+      'csp-headers',
+      '--silent'
+    );
+    expect(stdout).to.equal(
+      "default-src 'self'; script-src 'self' 'unsafe-inline';"
+    );
+
+    // let { stdout } = await testProject.runEmberCommand(
+    //   'csp-headers',
+    //   '--silent',
+    //   '--evironment=production'
+    // );
+    // expect(stdout).to.equal(
+    //   "default-src 'self'; script-src 'self';"
+    // );
+  });
 });

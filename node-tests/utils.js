@@ -4,9 +4,15 @@ const fs = require('fs');
 const CONFIG_PATH = 'config/content-security-policy.js';
 const CSP_META_TAG_REG_EXP = /<meta http-equiv="Content-Security-Policy" content="(.*)">/i;
 
+function parseConfigValue(value) {
+  const result = String(value).match(/^{{(.*)}}$/);
+  return result ? result[1] : value;
+}
+
 async function setConfig(testProject, config) {
-  let content = `module.exports = function() { return ${JSON.stringify(
-    config
+  let content = `module.exports = function(environment) { return ${JSON.stringify(
+    config,
+    (_key, value) => parseConfigValue(value)
   )}; }`;
 
   await testProject.writeFile(CONFIG_PATH, content);
