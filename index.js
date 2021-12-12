@@ -284,9 +284,10 @@ module.exports = {
     // Add nonce to <script> tag inserted by Ember CLI to assert that test file was loaded.
     if (type === 'test-body-footer') {
       existingContent.forEach((entry, index) => {
-        let result = /<script>[\s\S]*?'The tests file was not loaded\. Make sure your tests index\.html includes "assets\/tests\.js"\.'[\s\S]*?<\/script>/.test(
-          entry
-        );
+        let result =
+          /<script>[\s\S]*?'The tests file was not loaded\. Make sure your tests index\.html includes "assets\/tests\.js"\.'[\s\S]*?<\/script>/.test(
+            entry
+          );
 
         if (result) {
           existingContent[index] = entry.replace(
