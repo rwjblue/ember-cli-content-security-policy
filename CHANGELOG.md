@@ -2,6 +2,19 @@
 
 
 
+
+## v2.0.1 (2021-12-13)
+
+#### :bug: Bug Fix
+* [#274](https://github.com/rwjblue/ember-cli-content-security-policy/pull/274) fix: pass environment into readConfig ([@guidojw](https://github.com/guidojw))
+
+#### :house: Internal
+* [#272](https://github.com/rwjblue/ember-cli-content-security-policy/pull/272) use a recent fastboot version in tests ([@jelhan](https://github.com/jelhan))
+
+#### Committers: 2
+- Guido de Jong ([@guidojw](https://github.com/guidojw))
+- Jeldrik Hanschke ([@jelhan](https://github.com/jelhan))
+
 ## v2.0.0 (2021-11-12)
 
 v2.0.0 is the same as last pre-release (v2.0.0-5). It does not include any additional changes.
