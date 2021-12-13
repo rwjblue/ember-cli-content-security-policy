@@ -104,6 +104,7 @@ describe('e2e: fastboot integration', function () {
         },
       });
 
+      expect(response.statusCode).to.equal(200);
       expect(response.headers).to.include.key(
         'content-security-policy-report-only'
       );
@@ -122,7 +123,7 @@ describe('e2e: fastboot integration', function () {
       await removeConfig(testProject);
     });
 
-    it.only('sets CSP header if served via FastBoot', async function () {
+    it('sets CSP header if served via FastBoot', async function () {
       let response = await request({
         url: 'http://localhost:49742',
         headers: {
@@ -130,6 +131,7 @@ describe('e2e: fastboot integration', function () {
         },
       });
 
+      expect(response.statusCode).to.equal(200);
       expect(response.headers).to.include.key('content-security-policy');
     });
   });
