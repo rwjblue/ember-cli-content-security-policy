@@ -41,7 +41,7 @@
     "chai": "^4.3.0",
     "denodeify": "^1.2.1",
     "ember-addon-tests": "^0.0.2",
-    "ember-cli": "~3.26.0",
+    "ember-cli": "~3.28.4",
     "ember-cli-addon-tests": "^0.11.1",
     "ember-cli-dependency-checker": "^3.2.0",
     "ember-cli-fastboot": "^3.2.0-beta.4",
