@@ -104,9 +104,35 @@ describe('e2e: fastboot integration', function () {
         },
       });
 
+      expect(response.statusCode).to.equal(200);
       expect(response.headers).to.include.key(
         'content-security-policy-report-only'
       );
+    });
+  });
+
+  describe('scenario: with reportOnly = false', function () {
+    before(async function () {
+      await setConfig(testProject, { reportOnly: false });
+      await testProject.runEmberCommand('build');
+      await startServer();
+    });
+
+    after(async function () {
+      await stopServer();
+      await removeConfig(testProject);
+    });
+
+    it('sets CSP header if served via FastBoot', async function () {
+      let response = await request({
+        url: 'http://localhost:49742',
+        headers: {
+          Accept: 'text/html',
+        },
+      });
+
+      expect(response.statusCode).to.equal(200);
+      expect(response.headers).to.include.key('content-security-policy');
     });
   });
 
