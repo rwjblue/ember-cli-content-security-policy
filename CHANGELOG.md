@@ -3,6 +3,15 @@
 
 
 
+
+## v2.0.2 (2021-12-20)
+
+#### :bug: Bug Fix
+* [#271](https://github.com/rwjblue/ember-cli-content-security-policy/pull/271) Fastboot instance initializer throws if reportOnly config is false ([@JoeyBG](https://github.com/JoeyBG))
+
+#### Committers: 1
+- Joey Bolduc-Gilbert ([@JoeyBG](https://github.com/JoeyBG))
+
 ## v2.0.1 (2021-12-13)
 
 #### :bug: Bug Fix
