@@ -4,6 +4,15 @@
 
 
 
+
+## v2.0.3 (2022-01-02)
+
+#### :bug: Bug Fix
+* [#277](https://github.com/rwjblue/ember-cli-content-security-policy/pull/277) Fixing tiny typo in deprecation-warning ([@GabrielCousin](https://github.com/GabrielCousin))
+
+#### Committers: 1
+- Gabriel Cousin ([@GabrielCousin](https://github.com/GabrielCousin))
+
 ## v2.0.2 (2021-12-20)
 
 #### :bug: Bug Fix
