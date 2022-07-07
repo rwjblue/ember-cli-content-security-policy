@@ -213,7 +213,7 @@ For some addons compliance with a strict CSP requires a custom configuration. Th
 
 ### Ember Auto Import
 
-[Ember Auto Import](https://github.com/ef4/ember-auto-import#ember-auto-import) uses the `eval` function by default in development builds. This violates the default CSP policy. It's recommended to set Ember Auto Import's `forbidEval` option to `true` if using Content Security Policy. You should _not_ add `'unsafe-eval'` to `script-src` directive as this disalbes main security provided by CSP.
+[Ember Auto Import](https://github.com/ef4/ember-auto-import#ember-auto-import) uses the `eval` function by default in development builds. This violates the default CSP policy. It's recommended to set Ember Auto Import's `forbidEval` option to `true` if using Content Security Policy. You should _not_ add `'unsafe-eval'` to `script-src` directive as this disables main security provided by CSP.
 
 ### Embroider
 
