@@ -67,6 +67,9 @@ module.exports = {
   // FastBoot. This one is returned here as default configuration in order to make it
   // available at run time.
   config: function (environment, runConfig) {
+    if (process.env.DISABLE_CSP) {
+      return {};
+    }
     debug('### Cache run-time config locally in config hook');
 
     // store run config to be available later
@@ -101,6 +104,9 @@ module.exports = {
   },
 
   serverMiddleware: function ({ app: expressApp, options }) {
+    if (process.env.DISABLE_CSP) {
+      return;
+    }
     debug('### Register middleware to set CSP headers in development server');
 
     const requiresLiveReload = options.liveReload;
@@ -124,10 +130,13 @@ module.exports = {
       // Use policy for test environment if both of these conditions are met:
       // 1. the request is for tests and
       // 2. the build include tests
-      let buildIncludeTests = this.app.tests;
+      const env = process.env.EMBER_ENV;
+      let buildIncludeTests = this.app
+        ? this.app.tests
+        : process.env.USE_TESTS_CSP || false;
       let isRequestForTests =
         req.originalUrl.startsWith('/tests') && buildIncludeTests;
-      let environment = isRequestForTests ? 'test' : this.app.env;
+      let environment = isRequestForTests ? 'test' : env;
 
       debug(
         buildIncludeTests
