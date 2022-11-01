@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "body-parser": "^1.19.1",
-    "chalk": "^4.1.1",
+    "chalk": "^5.1.2",
     "debug": "^4.3.1",
     "ember-cli-babel": "^7.26.11",
     "ember-cli-version-checker": "^5.0.2"
